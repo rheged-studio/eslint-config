@@ -13,13 +13,13 @@
     "storybook",
     "code-quality"
   ],
-  "homepage": "https://github.com/acme-skunkworks/eslint-config#readme",
+  "homepage": "https://github.com/rheged-studio/eslint-config#readme",
   "bugs": {
-    "url": "https://github.com/acme-skunkworks/eslint-config/issues"
+    "url": "https://github.com/rheged-studio/eslint-config/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/acme-skunkworks/eslint-config.git"
+    "url": "https://github.com/rheged-studio/eslint-config.git"
   },
   "license": "MIT",
   "author": {
