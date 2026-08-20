@@ -78,5 +78,5 @@ Full rationale (and the protomolecule issues behind it) is in [`CLAUDE.md`](CLAU
 
 - [Changelog](CHANGELOG.md)
 - [Migration guide](MIGRATION_FROM_PROTOMOLECULE.md) — moving from `@robeasthope/eslint-config`
-- [Repository](https://github.com/acme-skunkworks/eslint-config)
+- [Repository](https://github.com/rheged-studio/eslint-config)
 - [Licence](LICENSE) — MIT
