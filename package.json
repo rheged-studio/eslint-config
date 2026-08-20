@@ -1,5 +1,5 @@
 {
-  "name": "@acme-skunkworks/eslint-config",
+  "name": "@rheged-studio/eslint-config",
   "version": "1.1.3",
   "description": "Shared ESLint flat-config preset with TypeScript, React, Astro, Sanity, and Storybook support",
   "keywords": [
