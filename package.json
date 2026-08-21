@@ -109,10 +109,10 @@
     "typescript-eslint": "^8.46.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
     "@rheged-studio/changelog-core": "^1.1.1",
     "@rheged-studio/commitlint-config": "^1.0.1",
-    "@rheged-studio/markdownlint-config": "^3.0.0",
-    "@commitlint/cli": "^21.2.1",
+    "@rheged-studio/markdownlint-config": "^3.0.1",
     "@types/eslint": "^9.6.1",
     "@types/node": "^25.6.0",
     "bats": "1.13.0",
