@@ -65,13 +65,13 @@ importers:
         specifier: ^8.46.0
         version: 8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3)
     devDependencies:
-      "@acme-studio/changelog-core":
+      "@rheged-studio/changelog-core":
         specifier: ^1.1.1
         version: 1.1.1
-      "@acme-studio/commitlint-config":
+      "@rheged-studio/commitlint-config":
         specifier: ^1.0.1
         version: 1.0.1
-      "@acme-studio/markdownlint-config":
+      "@rheged-studio/markdownlint-config":
         specifier: ^3.0.0
         version: 3.0.0
       "@commitlint/cli":
@@ -112,7 +112,7 @@ importers:
         version: 4.1.6(@types/node@25.6.0)(vite@8.0.13(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.1)(yaml@2.8.3))
 
 packages:
-  "@acme-studio/changelog-core@1.1.1":
+  "@rheged-studio/changelog-core@1.1.1":
     resolution:
       {
         integrity: sha512-R54sMZZmm8++61Okv1YggJOsGAjMZ/JQ0Hp6zd1XWfvo2K9/xBhC3+VN9sKlp//6b99e/A9v9Y/oBQGmmyLbZA==,
@@ -120,14 +120,14 @@ packages:
     engines: { node: ">=22" }
     hasBin: true
 
-  "@acme-studio/commitlint-config@1.0.1":
+  "@rheged-studio/commitlint-config@1.0.1":
     resolution:
       {
         integrity: sha512-rBA5icoqnDDfRWadOZzTEGoarAxgqu7WCLiaZyd/wr2DJoVra9RbMF4CrEIdtArVmv/7y6Cs5wbWy6dLA1p9aw==,
       }
     engines: { node: ">=22" }
 
-  "@acme-studio/markdownlint-config@3.0.0":
+  "@rheged-studio/markdownlint-config@3.0.0":
     resolution:
       {
         integrity: sha512-L3Fs+maqPGpJigbrIAeMCkRA3Dy9SocoYaKtILatKkvpXuJ1XdFHmbI8L0aL0oHUjwvlCU/D/6IvY+hekck6XQ==,
@@ -6045,14 +6045,14 @@ packages:
       }
 
 snapshots:
-  "@acme-studio/changelog-core@1.1.1": {}
+  "@rheged-studio/changelog-core@1.1.1": {}
 
-  "@acme-studio/commitlint-config@1.0.1":
+  "@rheged-studio/commitlint-config@1.0.1":
     dependencies:
       "@commitlint/config-conventional": 21.2.0
       "@commitlint/types": 21.2.0
 
-  "@acme-studio/markdownlint-config@3.0.0": {}
+  "@rheged-studio/markdownlint-config@3.0.0": {}
 
   "@astrojs/compiler@3.0.1": {}
 

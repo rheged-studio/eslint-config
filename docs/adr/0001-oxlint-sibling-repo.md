@@ -3,11 +3,11 @@
 **Status:** proposed
 **Linear:** [A-223](https://linear.app/rheged-studio/issue/A-223)
 
-This ADR investigates whether to spin up a sibling repository derived from `@acme-studio/eslint-config` that replaces ESLint with [oxlint](https://oxc.rs/docs/guide/usage/linter.html). It documents the trade-offs and considered options; the proceed / defer / reject decision is deferred to PR review on this ADR.
+This ADR investigates whether to spin up a sibling repository derived from `@rheged-studio/eslint-config` that replaces ESLint with [oxlint](https://oxc.rs/docs/guide/usage/linter.html). It documents the trade-offs and considered options; the proceed / defer / reject decision is deferred to PR review on this ADR.
 
 ## Context
 
-`@acme-studio/eslint-config` is a thin ESLint v9 flat-config composer. Its value is not the lint engine but the **curation**: which rules are on, which are off, and the composition order that makes them play together. Concretely:
+`@rheged-studio/eslint-config` is a thin ESLint v9 flat-config composer. Its value is not the lint engine but the **curation**: which rules are on, which are off, and the composition order that makes them play together. Concretely:
 
 - The `base` preset stacks a plugin-alias hack, global ignores, `eslint-config-canonical/auto` (which transitively wires `eslint-plugin-import-x`, `react`, `react-hooks`, `jsx-a11y`, `unicorn`, `regexp`, `n`, `promise`, `jsdoc`), then `packageJson`, `commonjs`, and `preferences` (`index.ts:35-44`).
 - Composition order is load-bearing: `reactRouterExceptions` must come after `preferences` for React Router 7's typed exports, and `eslint-plugin-import-x` is registered under both `import` and `import-x` so canonical's rule references resolve (`index.ts:22-27`, `index.ts:60-63`).
@@ -38,7 +38,7 @@ Oxlint is a Rust-based linter (Oxc project, v1.0 stable since August 2025, VoidZ
 
 ## Considered Options
 
-### A. New oxlint sibling repo (e.g. `@acme-studio/oxlint-config`)
+### A. New oxlint sibling repo (e.g. `@rheged-studio/oxlint-config`)
 
 Fork the intent — shared org lint standards — into an independent repo with its own `.oxlintrc.json` presets, semver, and Trusted Publisher. ESLint config stays canonical for existing consumers. The published bootstrap docs in `CLAUDE.md` (recovery codes, first-publish 2FA dance) apply unchanged.
 
