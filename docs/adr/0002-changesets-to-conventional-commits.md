@@ -9,7 +9,7 @@ This ADR proposes replacing **Changesets** with a **Conventional Commits**–dri
 
 ## Context
 
-Versioning today is Changesets-driven. A contributor (via `/send-it`) writes an explicit `.changeset/<slug>.md` declaring the bump and prose; the private **release-orchestrator** later runs `pnpm changeset:version`, opens the version PR, and on a later tick squash-merges it; that merge fires `release.yml`, which publishes the prebuilt tarball to npm via OIDC Trusted Publishing (+ provenance) and mirrors it to GitHub Packages. The whole pipeline has been hardened deliberately (A-312/320/323/325/326/328): the org-compromise-grade App key never touches public CI, build-time code runs only in an unprivileged `build` job, and both publish legs ship one byte-identical, attested tarball.
+Versioning today is Changesets-driven. A contributor (via `/send-it`) writes an explicit `.changeset/<slug>.md` declaring the bump and prose; **Clacks** later runs `pnpm changeset:version`, opens the version PR, and on a later tick squash-merges it; that merge fires `release.yml`, which publishes the prebuilt tarball to npm via OIDC Trusted Publishing (+ provenance) and mirrors it to GitHub Packages. The whole pipeline has been hardened deliberately (A-312/320/323/325/326/328): the org-compromise-grade App key never touches public CI, build-time code runs only in an unprivileged `build` job, and both publish legs ship one byte-identical, attested tarball.
 
 The motivating question was "should we move to Conventional Commits?" Rubber-ducking it surfaced that the question braids together **four independent decisions** that were being treated as one:
 
