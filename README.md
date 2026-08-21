@@ -4,7 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@rheged-studio/eslint-config?logo=npm)](https://www.npmjs.com/package/@rheged-studio/eslint-config)
 [![Provenance: built and signed on GitHub Actions](https://img.shields.io/badge/provenance-built%20%26%20signed%20on%20GitHub%20Actions-2ea44f?logo=github)](https://www.npmjs.com/package/@rheged-studio/eslint-config#provenance)
-[![License: MIT](https://img.shields.io/npm/l/@rheged-studio/eslint-config)](LICENSE)
+[![Licence: MIT](https://img.shields.io/npm/l/@rheged-studio/eslint-config)](LICENSE)
 [![Node engine](https://img.shields.io/node/v/@rheged-studio/eslint-config?logo=node.js)](https://www.npmjs.com/package/@rheged-studio/eslint-config)
 
 Every release is published to npm via OIDC Trusted Publishing with a **provenance attestation** — the artefact is built and signed on GitHub Actions, so consumers can verify exactly which commit and workflow produced it.
