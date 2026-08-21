@@ -99,7 +99,7 @@ export { tableComponents } from "./rules/tableComponents.js";
 
 /**
  * Back-compat default export — preserves the v6.x composition exactly so
- * existing consumers can `import config from "@acme-skunkworks/eslint-config"`
+ * existing consumers can `import config from "@rheged-studio/eslint-config"`
  * during their migration window.
  *
  * **Deprecated**: prefer named imports per the README's "Migrating from

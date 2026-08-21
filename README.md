@@ -1,18 +1,18 @@
-# @acme-skunkworks/eslint-config
+# @rheged-studio/eslint-config
 
 > A shared ESLint v9 flat-config **preset composer** for TypeScript and React projects — import named-export presets and compose only the ones you need.
 
-[![npm version](https://img.shields.io/npm/v/@acme-skunkworks/eslint-config?logo=npm)](https://www.npmjs.com/package/@acme-skunkworks/eslint-config)
-[![Provenance: built and signed on GitHub Actions](https://img.shields.io/badge/provenance-built%20%26%20signed%20on%20GitHub%20Actions-2ea44f?logo=github)](https://www.npmjs.com/package/@acme-skunkworks/eslint-config#provenance)
-[![License: MIT](https://img.shields.io/npm/l/@acme-skunkworks/eslint-config)](LICENSE)
-[![Node engine](https://img.shields.io/node/v/@acme-skunkworks/eslint-config?logo=node.js)](https://www.npmjs.com/package/@acme-skunkworks/eslint-config)
+[![npm version](https://img.shields.io/npm/v/@rheged-studio/eslint-config?logo=npm)](https://www.npmjs.com/package/@rheged-studio/eslint-config)
+[![Provenance: built and signed on GitHub Actions](https://img.shields.io/badge/provenance-built%20%26%20signed%20on%20GitHub%20Actions-2ea44f?logo=github)](https://www.npmjs.com/package/@rheged-studio/eslint-config#provenance)
+[![Licence: MIT](https://img.shields.io/npm/l/@rheged-studio/eslint-config)](LICENSE)
+[![Node engine](https://img.shields.io/node/v/@rheged-studio/eslint-config?logo=node.js)](https://www.npmjs.com/package/@rheged-studio/eslint-config)
 
 Every release is published to npm via OIDC Trusted Publishing with a **provenance attestation** — the artefact is built and signed on GitHub Actions, so consumers can verify exactly which commit and workflow produced it.
 
 ## Install
 
 ```bash
-pnpm add -D @acme-skunkworks/eslint-config eslint prettier
+pnpm add -D @rheged-studio/eslint-config eslint prettier
 ```
 
 `eslint` (`^8.57.0 || ^9.0.0`) and `prettier` (`^3.0.0`) are **required peer dependencies** — install them alongside. Every ESLint plugin the config uses ships as a regular dependency, so you don't install plugins separately. Node 22+ is required.
@@ -28,7 +28,7 @@ import {
   base,
   typescript,
   frameworkRouting,
-} from "@acme-skunkworks/eslint-config";
+} from "@rheged-studio/eslint-config";
 
 export default [
   ...base,

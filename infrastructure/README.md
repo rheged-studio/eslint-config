@@ -16,7 +16,7 @@ infrastructure/
     fixtures/                       # static inputs shared by tests
 ```
 
-Changelog validate / enrich / finalise live in `@acme-skunkworks/changelog-core`
+Changelog validate / enrich / finalise live in `@rheged-studio/changelog-core`
 (`pnpm exec changelog-core …`); post-merge write-back is
 `reusable-changelog-enrich.yml` (A-796 / A-821).
 

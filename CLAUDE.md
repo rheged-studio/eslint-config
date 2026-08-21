@@ -10,7 +10,7 @@ repo-specific guidance follows below.
 
 ## Repo
 
-Standalone home for `@acme-skunkworks/eslint-config` (extracted from `RobEasthope/protomolecule` — see `MIGRATION_FROM_PROTOMOLECULE.md`). Single ESLint v9 flat-config package, written in TypeScript, compiled to `dist/`, published from this repo via release-please (Conventional Commits — A-371).
+Standalone home for `@rheged-studio/eslint-config` (extracted from `RobEasthope/protomolecule` — see `MIGRATION_FROM_PROTOMOLECULE.md`). Single ESLint v9 flat-config package, written in TypeScript, compiled to `dist/`, published from this repo via release-please (Conventional Commits — A-371).
 
 ## GitHub Actions repo config (A-176)
 
@@ -50,7 +50,7 @@ Node 22 required (`.nvmrc`, `engines.node: ">=22"`, `engine-strict=true` in `.np
 ## Agent skills
 
 The shipping and housekeeping commands are provided by the shared
-[`@acme-skunkworks/agent-skills`](https://github.com/rheged-studio/agent-skills)
+[`@rheged-studio/agent-skills`](https://github.com/rheged-studio/agent-skills)
 bundles, installed via [skills.sh](https://skills.sh) under `.claude/skills/`
 (and mirrored to `.agents/skills/` for Cursor). They replace the previous bespoke
 `.claude/commands/send-it.md`:
@@ -74,7 +74,7 @@ this repo's facts). Re-install or upgrade with `npx skills add … --copy`; re-r
 
 - **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes only the staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}`, `sort-package-json` + `eslint --fix` for `**/package.json` (the `packageJson` preset's glob applies, plus any `jsonc/*` rules from canonical), `markdownlint-cli2 --fix` for `**/*.{md,mdx}`, `yamllint` (read-only check) for `**/*.{yml,yaml}`, `actionlint` (read-only check) for `.github/workflows/*.{yml,yaml}`. Each task is wrapped in `bash -c '… "$@" --` so the staged file paths are passed through. The auto-fixers carry an `|| true` fallback so they never block — CI is the gate. The two YAML linters intentionally do **not** carry the `|| true` fallback: semantic errors block the commit (warnings don't). yamllint and actionlint are best-effort: if the tool isn't on `PATH` locally, the hook prints a platform-appropriate `brew install …` (or `pip` / `curl`) hint and skips. CI still enforces.
 - **`commit-msg`** — strips any `Co-Authored-By: Claude … <noreply@anthropic.com>` trailer. Backstops the global `~/.claude/CLAUDE.md` rule (Claude is tooling, not a contributor).
-- **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) bypass — the release-please release commit (`chore(main): release <version>`) is authorised by bot identity, not commit message shape. A-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@acme-skunkworks/commitlint-config`.
+- **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) bypass — the release-please release commit (`chore(main): release <version>`) is authorised by bot identity, not commit message shape. A-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@rheged-studio/commitlint-config`.
 
 Hooks are dormant in CI: `pkg-release.yml` and `ci.yml` set `HUSKY=0` so the `prepare` script no-ops during `pnpm install`.
 
@@ -82,7 +82,7 @@ To bypass any hook in an emergency: `git commit --no-verify` or `git push --no-v
 
 ## Markdown lint
 
-`markdownlint-cli2` reads `.markdownlint-cli2.jsonc`, which extends `@acme-skunkworks/markdownlint-config`. Pre-commit auto-fixes staged `**/*.{md,mdx}` via lint-staged (`|| true`, so it never blocks). **CI enforces:** the `build-and-lint` job in `ci.yml` runs `pnpm lint:md` after ESLint.
+`markdownlint-cli2` reads `.markdownlint-cli2.jsonc`, which extends `@rheged-studio/markdownlint-config`. Pre-commit auto-fixes staged `**/*.{md,mdx}` via lint-staged (`|| true`, so it never blocks). **CI enforces:** the `build-and-lint` job in `ci.yml` runs `pnpm lint:md` after ESLint.
 
 ## Validating workflows and YAML
 
@@ -97,7 +97,7 @@ Two non-Node tools augment Prettier's formatting pass with the semantic checks P
 - `ensure-bats.sh` verifies the downloaded release tarball against a pinned sha256 before extraction.
 - `ensure-yamllint.sh` installs via `pip install --require-hashes -r infrastructure/requirements-yamllint.txt`, so pip refuses any artefact — yamllint or a transitive dep — whose digest isn't listed. Regenerate that file when bumping (see its header).
 
-When bumping any of these, update the version **and** the matching digest/requirements together. These scripts run only in local hooks and the reusable lint lane's pre-commit equivalents — publish logic lives in `acme-skunkworks/shared-workflows` (`reusable-pkg-release.yml`, A-588).
+When bumping any of these, update the version **and** the matching digest/requirements together. These scripts run only in local hooks and the reusable lint lane's pre-commit equivalents — publish logic lives in `rheged-studio/shared-workflows` (`reusable-pkg-release.yml`, A-588).
 
 Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-length / indentation to warnings (Prettier owns formatting), allows the GitHub Actions truthy values (`on`, `off`, `yes`, `no`), and ignores `node_modules/`, `dist/`, `.turbo/`, `pnpm-lock.yaml`. CI YAML linting is owned by the shared `reusable-lint.yml` lane (centralised `.yamllint.yml` + actionlint 1.7.12 in shared-workflows, SK-422).
 
@@ -115,7 +115,7 @@ Enforcement: pre-commit is best-effort (skip with install hint when missing); CI
 
 | Workflow / Job                          | Under `act` | Notes                                                                                                                                                                                                                          |
 | --------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ci.yml` → `lint` / `build-test`        | ⚠️ partial  | Reusable-workflow callers need cross-repo fetch; `act` may not resolve `acme-skunkworks/shared-workflows@<sha>` without extra setup. Local validation: `pnpm lint:workflows` + push to GHA.                                    |
+| `ci.yml` → `lint` / `build-test`        | ⚠️ partial  | Reusable-workflow callers need cross-repo fetch; `act` may not resolve `rheged-studio/shared-workflows@<sha>` without extra setup. Local validation: `pnpm lint:workflows` + push to GHA.                                    |
 | `ci.yml` → `changelog-completeness`     | ✅ full     | On a `feat`/`fix`/breaking title with no `changelog/` entry it fails by design. PR-title lint is in `validate-pr-title.yml`.                                                                                                   |
 | `pkg-release.yml` → `release`           | ⚠️ partial  | Thin caller into `reusable-pkg-release.yml`. Fails at OIDC/provenance steps without a real `ACTIONS_ID_TOKEN_REQUEST_URL` — documented gap. The `npm-release` environment's branch policy is server-side, so `act` ignores it. |
 | `claude-code-review.yml` / `claude.yml` | ⏭️ skip     | Need `CLAUDE_CODE_OAUTH_TOKEN`. The `act:*` scripts use `-W` to scope to specific workflows, so these aren't loaded by default.                                                                                                |
@@ -134,7 +134,7 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 **Post-push triage** (when CI does run remotely, after `/send-it`): `pnpm ci:list` shows recent runs, `pnpm ci:watch` streams the latest one, `pnpm ci:view` opens a specific run. All three require `gh auth login` first.
 
-**Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`. A-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@acme-skunkworks/commitlint-config`.
+**Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`. A-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@rheged-studio/commitlint-config`.
 
 ## `infrastructure/`
 
@@ -155,7 +155,7 @@ Today's scripts:
 | `scripts/ensure-bats.sh`       | `ci.yml` bats install step | `tests/ensure-bats.bats` (cache hit/miss, version override, off-PATH cache, substring guard, `GITHUB_PATH` propagation) |
 
 Changelog validate / completeness / enrich / finalise are provided by
-`@acme-skunkworks/changelog-core` (`pnpm validate:changelog`,
+`@rheged-studio/changelog-core` (`pnpm validate:changelog`,
 `pnpm exec changelog-core check-completeness`). Post-merge write-back is the
 `changelog-enrich` job in `pkg-release.yml` calling
 `reusable-changelog-enrich.yml` (A-796 / A-821).
@@ -218,7 +218,7 @@ Once the package exists on npm AND its Trusted Publisher is configured against t
 **Cross-boundary hardening (A-326).** npm Trusted Publishing binds its OIDC subject to repository + **caller workflow filename** (`pkg-release.yml`, A-543) + environment — not the reusable callee. Three layers close the trust boundary:
 
 - **No `workflow_dispatch`.** The only trigger is `push: [main]`; re-run a failed release via "Re-run jobs" on the original push run.
-- **Branch-restricted `npm-release` environment** on the reusable publish jobs. Configured in repo settings: `gh api -X PUT repos/acme-skunkworks/eslint-config/environments/npm-release` with `deployment_branch_policy.custom_branch_policies=true`, then a single `main` branch policy.
+- **Branch-restricted `npm-release` environment** on the reusable publish jobs. Configured in repo settings: `gh api -X PUT repos/rheged-studio/eslint-config/environments/npm-release` with `deployment_branch_policy.custom_branch_policies=true`, then a single `main` branch policy.
 - **Version-vs-tag gate** inside `reusable-pkg-release.yml`: a feature-merge (version unchanged) is a clean no-op; a release-PR merge publishes.
 
 **Build once, publish the exact artifact (A-328).** Implemented in `reusable-pkg-release.yml` — build-time code runs only in an unprivileged job; both publish legs ship one byte-identical tarball with attestation (`gh attestation verify <tarball>`).
