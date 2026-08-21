@@ -1,8 +1,8 @@
 ---
 title: Float shared-workflows SHA pins to @v1
-release_note: ''
-created_at: '2026-08-07T14:26:51Z'
-merged_at: '2026-08-11T13:04:33Z'
+release_note: ""
+created_at: "2026-08-07T14:26:51Z"
+merged_at: "2026-08-11T13:04:33Z"
 branch: a-1356-eslint-config-float-shared-workflows-sha-pins-to-v1
 pr: 111
 commit: 18670d5
@@ -16,7 +16,8 @@ stats:
   files_changed: 3
   loc_added: 29
   loc_removed: 2
-  commits:
+  commits: 2
+version: 1.1.4
 ---
 
 ## Changed
