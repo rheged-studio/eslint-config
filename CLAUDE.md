@@ -64,9 +64,9 @@ bundles, installed via [skills.sh](https://skills.sh) under `.claude/skills/`
 - `/cleanup-repo` — prune merged branches, worktrees, filesystem cruft.
 - `/triage-pr` — drive a PR from draft-with-failing-CI to merge-ready.
 
-Each skill reads its own `config.json` (reconciled by `initialise-skills` from
+Each skill reads its own `config.json` (reconciled by `rheged-skills-setup` from
 this repo's facts). Re-install or upgrade with `npx skills add … --copy`; re-run
-`initialise-skills` afterwards to pick up new config keys.
+`/rheged-skills-setup --write` afterwards to pick up new config keys.
 
 ## Local hooks
 
