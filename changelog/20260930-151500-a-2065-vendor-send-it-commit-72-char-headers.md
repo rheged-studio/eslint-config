@@ -9,6 +9,13 @@ category: chore
 breaking: false
 issues:
   - A-2065
+merged_at: "2026-09-30T16:16:20Z"
+commit: 8a9ab42
+pr: 129
+stats:
+  loc_added: 120
+  loc_removed: 26
+  files_changed: 14
 ---
 
 ## Changed
