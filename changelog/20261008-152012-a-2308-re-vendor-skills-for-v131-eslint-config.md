@@ -3,10 +3,10 @@ title: Re-vendor agent skills for mattpocock/skills v1.3.1
 release_note: ""
 version:
 created_at: "2026-10-08T15:20:12Z"
-merged_at:
+merged_at: "2026-10-08T16:03:58Z"
 branch: a-2308-re-vendor-skills-for-v131-eslint-config
-pr:
-commit:
+pr: 130
+commit: cbba4c5
 author: rob@rheged.studio
 co_authors: []
 category: chore
@@ -14,6 +14,10 @@ breaking: false
 issues:
   - A-2308
   - A-2299
+stats:
+  loc_added: 6487
+  loc_removed: 1753
+  files_changed: 121
 ---
 
 ## Changed
