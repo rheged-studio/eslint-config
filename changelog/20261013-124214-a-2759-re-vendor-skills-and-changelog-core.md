@@ -12,9 +12,9 @@ co_authors: []
 category: chore
 breaking: false
 issues:
-  - A-2759
-  - A-2721
-  - A-2684
+  - R-2759
+  - R-2721
+  - R-2684
 stats:
   loc_added: 2283
   loc_removed: 701
@@ -23,7 +23,7 @@ stats:
 
 ## Changed
 
-**Roll the multi-team Linear skills and changelog-core onto this repo ([A-2759](https://linear.app/rheged-studio/issue/A-2759), [A-2721](https://linear.app/rheged-studio/issue/A-2721))**
+**Roll the multi-team Linear skills and changelog-core onto this repo ([R-2759](https://linear.app/rheged-studio/issue/R-2759), [R-2721](https://linear.app/rheged-studio/issue/R-2721))**
 
 - Re-vendor the Rheged skills from agent-skills v1.13.0 into `.claude/skills` and `.agents/skills` (`linear-sync` now resolves workflow states per issue team)
 - Set `issueKeys` to `["R", "A"]` in the `changelog`, `cleanup-repo`, `linear-sync` and `triage-pr` configs

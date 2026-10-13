@@ -12,8 +12,8 @@ co_authors: []
 category: chore
 breaking: false
 issues:
-  - A-2308
-  - A-2299
+  - R-2308
+  - R-2299
 stats:
   loc_added: 6487
   loc_removed: 1753
@@ -22,7 +22,7 @@ stats:
 
 ## Changed
 
-**Roll shared skill bundles to current catalogue ([A-2308](https://linear.app/rheged-studio/issue/A-2308), [A-2299](https://linear.app/rheged-studio/issue/A-2299))**
+**Roll shared skill bundles to current catalogue ([R-2308](https://linear.app/rheged-studio/issue/R-2308), [R-2299](https://linear.app/rheged-studio/issue/R-2299))**
 
 - Re-vendor Rheged and Matt mirrors via `fleet-update.mjs` (catalogue defaults — `rheged-skills-setup` replaces legacy `initialise-skills` in the install set)
 - Drop upstream `resolving-merge-conflicts`; add `implement-spec`, Matt `pr`, and `retro`; retain repo-specific extras (`find-skills`, `github-actions-docs`, `pnpm`, `shellcheck-configuration`, `vitest`)

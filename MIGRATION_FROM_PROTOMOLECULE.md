@@ -11,7 +11,7 @@ This repo is the new home for the ESLint configuration previously shipped from `
 - **Final published version under the old name:** `@robeasthope/eslint-config@6.2.1`
 - **Port date:** 2026-04-30
 
-The full pre-port audit lives on Linear issue [A-54](https://linear.app/rheged-studio/issue/A-54).
+The full pre-port audit lives on Linear issue [R-54](https://linear.app/rheged-studio/issue/R-54).
 
 ## What changed in the port
 
@@ -26,7 +26,7 @@ The port is a clean copy of the source files with these deliberate edits:
 ### Build / tooling
 
 - `tsconfig.json` previously extended `@robeasthope/tsconfig/base.json`, which is a `private: true` workspace package and is **not published on npm**. The base config has been **inlined** into `tsconfig.json` rather than depended on. Resulting compiler options are functionally equivalent to the previous setup.
-- `devDependencies`: dropped `@robeasthope/tsconfig: workspace:*` (inlined as above). Replaced `@robeasthope/markdownlint-config: workspace:*` with `@acme-skunkworks/markdownlint-config@^2.0.0` (renamed scope; see A-178).
+- `devDependencies`: dropped `@robeasthope/tsconfig: workspace:*` (inlined as above). Replaced `@robeasthope/markdownlint-config: workspace:*` with `@acme-skunkworks/markdownlint-config@^2.0.0` (renamed scope; see R-178).
 - Lint scripts: replaced `--cache-location ../../.turbo/.eslintcache-eslint-config` (Turborepo-specific monorepo path) with `--cache-location ./.eslintcache` (local). Added `.turbo/`, `.eslintcache*`, and `*.tsbuildinfo` to `.gitignore`.
 
 ### Preserved verbatim
@@ -39,7 +39,7 @@ The port is a clean copy of the source files with these deliberate edits:
 - `.markdownlint-cli2.jsonc` — extends `@acme-skunkworks/markdownlint-config` (the npm-published config).
 - `.prettierignore` — unchanged.
 - `CHANGELOG.md` — copied verbatim so the v6.2.1 history continuity is preserved.
-- `README.md` — copied; will be rewritten in a follow-up commit (A-56) to reflect the new repo and scope.
+- `README.md` — copied; will be rewritten in a follow-up commit (R-56) to reflect the new repo and scope.
 - `LICENSE` — copied from `RobEasthope/protomolecule/LICENSE` (MIT, Copyright (c) 2025 Rob Easthope).
 
 ## Tempest fold-in deltas
@@ -110,6 +110,6 @@ For v1.0.0's default export the composition is `base → typescript → react �
 
 No genuine conflicts surfaced — every Tempest delta is an addition, not a change to an existing rule's options. The one judgment call is the `sanity` preset: Tempest dropped it but we keep it opt-in. Documented above.
 
-### Verification (deferred to A-46 Step 8)
+### Verification (deferred to R-46 Step 8)
 
 After the fold-in lands, lint protomolecule and Tempest checkouts against the new package and confirm the deltas in lint output match the predictions above. Any unexpected differences become follow-up issues.

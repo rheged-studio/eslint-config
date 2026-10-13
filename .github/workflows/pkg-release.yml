@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  # No workflow_dispatch (A-326). Re-run a failed release via "Re-run jobs" on
+  # No workflow_dispatch (R-326). Re-run a failed release via "Re-run jobs" on
   # the original push run.
 
 concurrency:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 
 # Defence-in-depth: deny default token permissions; each job declares only what
-# it needs (ASW-313).
+# it needs (R-313).
 permissions: {}
 
 jobs:
@@ -38,8 +38,8 @@ jobs:
       # Required for artifact attestations.
       attestations: write
 
-  # Post-merge changelog enrich / finalise via changelog-core (A-796 / A-821).
-  # Pin at A-821 merge SHA (shared-workflows#65) until @v1 moves.
+  # Post-merge changelog enrich / finalise via changelog-core (R-796 / R-821).
+  # Pin at R-821 merge SHA (shared-workflows#65) until @v1 moves.
   # secrets: inherit passes ROADRUNNER_PRIVATE_KEY for the App-token write-back.
   # Runs independently of `release` — both read the bumped version from the
   # committed package.json; no publish artifact is needed.
