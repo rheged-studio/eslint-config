@@ -3,10 +3,10 @@ title: Re-vendor agent skills for v1.13.0 and bump changelog-core to 1.2.0
 release_note: ""
 version:
 created_at: "2026-10-13T12:42:14Z"
-merged_at:
+merged_at: "2026-10-13T13:31:31Z"
 branch: a-2759-eslint-config-re-vendor-the-multi-team-skills-and-changelog
-pr:
-commit:
+pr: 132
+commit: f8bf4c7
 author: rob@rheged.studio
 co_authors: []
 category: chore
@@ -16,9 +16,9 @@ issues:
   - A-2721
   - A-2684
 stats:
-  loc_added:
-  loc_removed:
-  files_changed:
+  loc_added: 2283
+  loc_removed: 701
+  files_changed: 81
 ---
 
 ## Changed
