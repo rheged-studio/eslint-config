@@ -25,6 +25,6 @@ stats:
 
 **Roll the multi-team Linear skills and changelog-core onto this repo ([A-2759](https://linear.app/rheged-studio/issue/A-2759), [A-2721](https://linear.app/rheged-studio/issue/A-2721))**
 
-- Re-vendor the Rheged skills from agent-skills v1.13.0 into `.claude/skills` and `.agents/skills` (linear-sync now resolves workflow states per issue team)
-- Set `issueKeys` to `["R", "A"]` in the changelog, cleanup-repo, linear-sync and triage-pr configs
+- Re-vendor the Rheged skills from agent-skills v1.13.0 into `.claude/skills` and `.agents/skills` (`linear-sync` now resolves workflow states per issue team)
+- Set `issueKeys` to `["R", "A"]` in the `changelog`, `cleanup-repo`, `linear-sync` and `triage-pr` configs
 - Bump the `@rheged-studio/changelog-core` devDependency from `^1.1.1` to `^1.2.0`
