@@ -110,7 +110,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
-    "@rheged-studio/changelog-core": "^1.1.1",
+    "@rheged-studio/changelog-core": "^1.2.0",
     "@rheged-studio/commitlint-config": "^1.0.1",
     "@rheged-studio/markdownlint-config": "^3.0.1",
     "@types/eslint": "^9.6.1",
