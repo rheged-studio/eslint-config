@@ -18,7 +18,7 @@ infrastructure/
 
 Changelog validate / enrich / finalise live in `@rheged-studio/changelog-core`
 (`pnpm exec changelog-core …`); post-merge write-back is
-`reusable-changelog-enrich.yml` (A-796 / A-821).
+`reusable-changelog-enrich.yml` (R-796 / R-821).
 
 ## Per-script language rule
 

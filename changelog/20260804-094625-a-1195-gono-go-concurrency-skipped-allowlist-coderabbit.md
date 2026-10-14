@@ -1,8 +1,8 @@
 ---
 title: Stop GO/NO GO false-reds and CodeRabbit PR-description edits
-release_note: ''
-created_at: '2026-08-04T09:46:25Z'
-merged_at: '2026-08-04T10:03:46Z'
+release_note: ""
+created_at: "2026-08-04T09:46:25Z"
+merged_at: "2026-08-04T10:03:46Z"
 branch: a-1195-gono-go-concurrency-skipped-allowlist-coderabbit
 pr: 105
 commit: 24ea141
@@ -11,7 +11,7 @@ co_authors: []
 category: chore
 breaking: false
 issues:
-  - A-1195
+  - R-1195
 stats:
   files_changed: 4
   loc_added: 57
@@ -22,4 +22,4 @@ version: 1.1.3
 
 ## Changed
 
-**GO/NO GO concurrency + skipped allowlist + CodeRabbit walkthrough ([A-1195](https://linear.app/rheged-studio/issue/A-1195))** — set `cancel-in-progress: false` on `ci.yml` and `validate-pr-title.yml` so a superseded run cannot mint a false-red gate; replace the blanket `skipped` accept with the branch-conditional allowlist (release-please only); put CodeRabbit's high-level summary in the walkthrough comment so description edits stop re-firing CI.
+**GO/NO GO concurrency + skipped allowlist + CodeRabbit walkthrough ([R-1195](https://linear.app/rheged-studio/issue/R-1195))** — set `cancel-in-progress: false` on `ci.yml` and `validate-pr-title.yml` so a superseded run cannot mint a false-red gate; replace the blanket `skipped` accept with the branch-conditional allowlist (release-please only); put CodeRabbit's high-level summary in the walkthrough comment so description edits stop re-firing CI.

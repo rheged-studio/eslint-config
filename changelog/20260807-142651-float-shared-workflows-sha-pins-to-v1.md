@@ -11,7 +11,7 @@ co_authors: []
 category: chore
 breaking: false
 issues:
-  - A-1356
+  - R-1356
 stats:
   files_changed: 3
   loc_added: 29
@@ -23,6 +23,6 @@ version: 1.1.4
 ## Changed
 
 - `validate-payload.yml` calls `reusable-validate-payload.yml@v1` instead of a
-  pinned commit SHA ([A-1356](https://linear.app/rheged-studio/issue/A-1356)).
+  pinned commit SHA ([R-1356](https://linear.app/rheged-studio/issue/R-1356)).
 - `pkg-release.yml` `changelog-enrich` calls `reusable-changelog-enrich.yml@v1`
   instead of a pinned commit SHA.

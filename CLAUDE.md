@@ -10,19 +10,19 @@ repo-specific guidance follows below.
 
 ## Repo
 
-Standalone home for `@rheged-studio/eslint-config` (extracted from `RobEasthope/protomolecule` — see `MIGRATION_FROM_PROTOMOLECULE.md`). Single ESLint v9 flat-config package, written in TypeScript, compiled to `dist/`, published from this repo via release-please (Conventional Commits — A-371).
+Standalone home for `@rheged-studio/eslint-config` (extracted from `RobEasthope/protomolecule` — see `MIGRATION_FROM_PROTOMOLECULE.md`). Single ESLint v9 flat-config package, written in TypeScript, compiled to `dist/`, published from this repo via release-please (Conventional Commits — R-371).
 
-## GitHub Actions repo config (A-176)
+## GitHub Actions repo config (R-176)
 
-Non-secret knobs shared by `ci.yml` and `pkg-release.yml` live in **`infrastructure/repo-config.yaml`**, loaded at runtime via `reusable-load-repo-config.yml@v1` (A-779).
+Non-secret knobs shared by `ci.yml` and `pkg-release.yml` live in **`infrastructure/repo-config.yaml`**, loaded at runtime via `reusable-load-repo-config.yml@v1` (R-779).
 
 | Key                         | Purpose                                                                                                                     |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `defaultBranch`             | Canonical default branch; keep in sync with static `on:` triggers (GitHub cannot derive `on.push.branches` from this file). |
 | `nodeVersionFile`           | Passed to `actions/setup-node` `node-version-file`.                                                                         |
 | `npmRegistryUrl`            | Public npm registry (`setup-node` when talking to npmjs).                                                                   |
-| `npmScope`                  | Package scope; must equal the owning GitHub org so `setup-node` scopes `.npmrc` for the GitHub Packages leg (A-323).        |
-| `githubPackagesRegistryUrl` | GitHub Packages npm registry (`https://npm.pkg.github.com`) — the secondary publish target (A-323).                         |
+| `npmScope`                  | Package scope; must equal the owning GitHub org so `setup-node` scopes `.npmrc` for the GitHub Packages leg (R-323).        |
+| `githubPackagesRegistryUrl` | GitHub Packages npm registry (`https://npm.pkg.github.com`) — the secondary publish target (R-323).                         |
 
 Secrets (`GITHUB_TOKEN`), OIDC Trusted Publishing, and release-please behaviour are unchanged — not in this file.
 
@@ -74,7 +74,7 @@ this repo's facts). Re-install or upgrade with `npx skills add … --copy`; re-r
 
 - **`pre-commit`** — runs `pnpm lint-staged`. Auto-fixes only the staged files: `prettier --write` for everything, `eslint --fix` for `**/*.{ts,tsx,js,mjs,cjs}`, `sort-package-json` + `eslint --fix` for `**/package.json` (the `packageJson` preset's glob applies, plus any `jsonc/*` rules from canonical), `markdownlint-cli2 --fix` for `**/*.{md,mdx}`, `yamllint` (read-only check) for `**/*.{yml,yaml}`, `actionlint` (read-only check) for `.github/workflows/*.{yml,yaml}`. Each task is wrapped in `bash -c '… "$@" --` so the staged file paths are passed through. The auto-fixers carry an `|| true` fallback so they never block — CI is the gate. The two YAML linters intentionally do **not** carry the `|| true` fallback: semantic errors block the commit (warnings don't). yamllint and actionlint are best-effort: if the tool isn't on `PATH` locally, the hook prints a platform-appropriate `brew install …` (or `pip` / `curl`) hint and skips. CI still enforces.
 - **`commit-msg`** — strips any `Co-Authored-By: Claude … <noreply@anthropic.com>` trailer. Backstops the global `~/.claude/CLAUDE.md` rule (Claude is tooling, not a contributor).
-- **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) bypass — the release-please release commit (`chore(main): release <version>`) is authorised by bot identity, not commit message shape. A-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@rheged-studio/commitlint-config`.
+- **`pre-push`** — blocks direct pushes to `main`; humans should use `/send-it` to open a PR. Bot users (`github-actions[bot]`, `road-runner-bot[bot]`) bypass — the release-please release commit (`chore(main): release <version>`) is authorised by bot identity, not commit message shape. R-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@rheged-studio/commitlint-config`.
 
 Hooks are dormant in CI: `pkg-release.yml` and `ci.yml` set `HUSKY=0` so the `prepare` script no-ops during `pnpm install`.
 
@@ -91,15 +91,15 @@ Two non-Node tools augment Prettier's formatting pass with the semantic checks P
 - **`actionlint` v1.7.5** — Go binary. Local install: `brew install actionlint` (macOS) or `bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.5/scripts/download-actionlint.bash)` elsewhere. CI downloads the official tarball and caches it.
 - **`yamllint` 1.37.1** — Python tool. Local install: `brew install yamllint` (macOS) or `pip install --user yamllint==1.37.1` elsewhere. CI installs via pip and caches `~/.local`.
 
-**Digest-pinned bootstraps (A-327).** The CI install scripts for these tools fetch-and-execute third-party code, so each is pinned by digest, not just a mutable tag:
+**Digest-pinned bootstraps (R-327).** The CI install scripts for these tools fetch-and-execute third-party code, so each is pinned by digest, not just a mutable tag:
 
 - `ensure-actionlint.sh` fetches `download-actionlint.bash` from the **immutable commit SHA** of the v1.7.5 tag (not the `v1.7.5` tag), passes the version explicitly so it installs that exact release, then independently re-verifies the extracted binary against a pinned sha256 (enforced on the CI arch, linux/amd64).
 - `ensure-bats.sh` verifies the downloaded release tarball against a pinned sha256 before extraction.
 - `ensure-yamllint.sh` installs via `pip install --require-hashes -r infrastructure/requirements-yamllint.txt`, so pip refuses any artefact — yamllint or a transitive dep — whose digest isn't listed. Regenerate that file when bumping (see its header).
 
-When bumping any of these, update the version **and** the matching digest/requirements together. These scripts run only in local hooks and the reusable lint lane's pre-commit equivalents — publish logic lives in `rheged-studio/shared-workflows` (`reusable-pkg-release.yml`, A-588).
+When bumping any of these, update the version **and** the matching digest/requirements together. These scripts run only in local hooks and the reusable lint lane's pre-commit equivalents — publish logic lives in `rheged-studio/shared-workflows` (`reusable-pkg-release.yml`, R-588).
 
-Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-length / indentation to warnings (Prettier owns formatting), allows the GitHub Actions truthy values (`on`, `off`, `yes`, `no`), and ignores `node_modules/`, `dist/`, `.turbo/`, `pnpm-lock.yaml`. CI YAML linting is owned by the shared `reusable-lint.yml` lane (centralised `.yamllint.yml` + actionlint 1.7.12 in shared-workflows, SK-422).
+Configuration: `.yamllint.yml` at the repo root extends defaults, demotes line-length / indentation to warnings (Prettier owns formatting), allows the GitHub Actions truthy values (`on`, `off`, `yes`, `no`), and ignores `node_modules/`, `dist/`, `.turbo/`, `pnpm-lock.yaml`. CI YAML linting is owned by the shared `reusable-lint.yml` lane (centralised `.yamllint.yml` + actionlint 1.7.12 in shared-workflows, R-422).
 
 Enforcement: pre-commit is best-effort (skip with install hint when missing); CI is the shared `lint` reusable caller in `ci.yml`, always enforced.
 
@@ -111,7 +111,7 @@ Enforcement: pre-commit is best-effort (skip with install hint when missing); CI
 
 **`.actrc`** at the repo root pins `ubuntu-latest` to `catthehacker/ubuntu:act-latest` (Ubuntu 24.04-based, matching real `ubuntu-latest`). The default `act` image is intentionally minimal and silently breaks Node/pnpm setups, so don't remove this. Container architecture is deliberately **not** pinned — `act` defaults to the host arch (arm64 on Apple Silicon), which is fast and matches GHA's _results_ for this codebase even though GHA runners are amd64.
 
-**Capability matrix** for this repo's workflows (the build-once split in A-326/328 is validated by static lint — actionlint/yamllint/shellcheck/bats green; the rows below describe the expected `act` behaviour and await a Docker-up `act` re-run):
+**Capability matrix** for this repo's workflows (the build-once split in R-326/328 is validated by static lint — actionlint/yamllint/shellcheck/bats green; the rows below describe the expected `act` behaviour and await a Docker-up `act` re-run):
 
 | Workflow / Job                          | Under `act` | Notes                                                                                                                                                                                                                          |
 | --------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -134,7 +134,7 @@ The PR event fixture lives at `.github/act-events/pull_request.json` and sets `p
 
 **Post-push triage** (when CI does run remotely, after `/send-it`): `pnpm ci:list` shows recent runs, `pnpm ci:watch` streams the latest one, `pnpm ci:view` opens a specific run. All three require `gh auth login` first.
 
-**Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`. A-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@rheged-studio/commitlint-config`.
+**Pre-push gate:** `.husky/pre-push` runs `pnpm lint:workflows` (actionlint) and `pnpm lint:yaml` (yamllint) on every push as a last-line safety net for cases where pre-commit was bypassed. Both are sub-second on this repo. If either tool isn't installed locally the hook prints an install hint and skips — CI is the enforced gate. To bypass entirely in an emergency: `git push --no-verify`. R-1023 also runs a best-effort `commitlint --from origin/main --to HEAD` range check, skipping with an install hint when `@commitlint/cli` or `origin/main` is missing; CI’s reusable commit-validation workflow remains authoritative. Configuration is `commitlint.config.mjs`, extending `@rheged-studio/commitlint-config`.
 
 ## `infrastructure/`
 
@@ -158,7 +158,7 @@ Changelog validate / completeness / enrich / finalise are provided by
 `@rheged-studio/changelog-core` (`pnpm validate:changelog`,
 `pnpm exec changelog-core check-completeness`). Post-merge write-back is the
 `changelog-enrich` job in `pkg-release.yml` calling
-`reusable-changelog-enrich.yml` (A-796 / A-821).
+`reusable-changelog-enrich.yml` (R-796 / R-821).
 
 CI: the shared `reusable-build-test.yml` caller runs vitest, shellcheck, and bats against this directory. Locally, `pnpm lint:sh` / `pnpm test:sh` skip with install hints if `shellcheck` / `bats` aren't on PATH — `pnpm test` (vitest) always runs because vitest is a node devDep.
 
@@ -190,11 +190,11 @@ The package is a flat-config preset composer. Source is TypeScript; consumers im
 
 ## Dated changelog (`changelog/`)
 
-The `changelog/` directory is the **only** changelog in the repo — there is no root `CHANGELOG.md` (release-please runs with `skip-changelog`, A-371). It keeps **one dated Markdown file per shippable change** — a browsable, per-change, machine-readable record (the pattern is borrowed from the `octavo` repo, adapted for a single semver'd npm package: a `version` field is added, `affected_packages` dropped). `pkg-release.yml` (via `reusable-pkg-release.yml`) sources its GitHub-release notes from these entries. Full schema and lifecycle in **`changelog/README.md`**.
+The `changelog/` directory is the **only** changelog in the repo — there is no root `CHANGELOG.md` (release-please runs with `skip-changelog`, R-371). It keeps **one dated Markdown file per shippable change** — a browsable, per-change, machine-readable record (the pattern is borrowed from the `octavo` repo, adapted for a single semver'd npm package: a `version` field is added, `affected_packages` dropped). `pkg-release.yml` (via `reusable-pkg-release.yml`) sources its GitHub-release notes from these entries. Full schema and lifecycle in **`changelog/README.md`**.
 
 Two-stage lifecycle — post-merge enrichment runs in-repo via
-`reusable-changelog-enrich.yml` on every push to `main` (A-796 / A-821); the
-orchestrator's inline finalise is retired later (A-801).
+`reusable-changelog-enrich.yml` on every push to `main` (R-796 / R-821); the
+orchestrator's inline finalise is retired later (R-801).
 
 1. **PR-time** — `/send-it` writes `changelog/<YYYYMMDD-HHMMSS>-<slug>.md` with the PR-time fields (and empty enrichment placeholders), **gated on shippability** (only for shippable changes — the same changes that get a release-triggering `feat`/`fix`/breaking PR title), so every entry maps to a version bump. CI's changelog-completeness gate re-enforces this coupling. The entry merges to `main` with its feature PR and sits with placeholders until post-merge enrich / release finalise.
 2. **Post-merge / release** — `pkg-release.yml`'s `changelog-enrich` job (`mode: finalise`) resolves the just-merged PR, fills `merged_at`/`commit`/`pr`/`stats` via `changelog-core enrich`, and stamps `version` via `changelog-core finalise` only when `package.json`'s version has no matching git tag (release-please cut). Write-back pushes only `changelog/**` as `road-runner-bot[bot]` (ADR 0004).
@@ -210,26 +210,26 @@ There are two release modes — know which one you're in.
 Once the package exists on npm AND its Trusted Publisher is configured against this repo's `pkg-release.yml` (and `npm-release` environment), every release flows through CI:
 
 1. Make changes on a feature branch; `/send-it` bundles, writes the dated `changelog/<slug>.md` entry (for shippable changes), sets a **Conventional Commits PR title** (`feat`/`fix`/`feat!` for shippable, a non-release type otherwise — still required by CI; no longer the sole post-merge bump signal under merge commits), pushes, opens a PR. Feature PRs land as **merge commits**. CI (`ci.yml` + `validate-pr-title.yml`) runs shared lint/build-test callers, the conventional-PR-title lint, the changelog-completeness gate, and the `GO/NO GO` aggregator.
-2. After merge, **Clacks** (road-runner-bot, runs a 15-min cron) mints a short-lived repo-scoped App token, runs `release-please release-pr` (which ranks Conventional Commits on `main` — A-824 — and writes `package.json` + `.release-please-manifest.json`), pushes the `release-please--branches--main` branch, and opens the "`chore(main): release <version>`" release PR. On a later tick it **squash-merges** that release PR once `GO/NO GO` is green (fan-out PRs also stay squash).
-3. The orchestrator's App-token merge pushes to `main`, re-firing `pkg-release.yml`: the `release` job publishes via shared-workflows; the sibling `changelog-enrich` job (`mode: finalise`) fills post-merge changelog metadata and stamps `version` on the release cut (A-796).
+2. After merge, **Clacks** (road-runner-bot, runs a 15-min cron) mints a short-lived repo-scoped App token, runs `release-please release-pr` (which ranks Conventional Commits on `main` — R-824 — and writes `package.json` + `.release-please-manifest.json`), pushes the `release-please--branches--main` branch, and opens the "`chore(main): release <version>`" release PR. On a later tick it **squash-merges** that release PR once `GO/NO GO` is green (fan-out PRs also stay squash).
+3. The orchestrator's App-token merge pushes to `main`, re-firing `pkg-release.yml`: the `release` job publishes via shared-workflows; the sibling `changelog-enrich` job (`mode: finalise`) fills post-merge changelog metadata and stamps `version` on the release cut (R-796).
 
-**`pkg-release.yml` is publish-only (A-320).** It does **not** create the release PR — versioning lives in the orchestrator where the App key stays private (A-312). Publish logic is centralised in shared-workflows (A-384); this repo no longer ships local `publish-*.sh` wrappers.
+**`pkg-release.yml` is publish-only (R-320).** It does **not** create the release PR — versioning lives in the orchestrator where the App key stays private (R-312). Publish logic is centralised in shared-workflows (R-384); this repo no longer ships local `publish-*.sh` wrappers.
 
-**Cross-boundary hardening (A-326).** npm Trusted Publishing binds its OIDC subject to repository + **caller workflow filename** (`pkg-release.yml`, A-543) + environment — not the reusable callee. Three layers close the trust boundary:
+**Cross-boundary hardening (R-326).** npm Trusted Publishing binds its OIDC subject to repository + **caller workflow filename** (`pkg-release.yml`, R-543) + environment — not the reusable callee. Three layers close the trust boundary:
 
 - **No `workflow_dispatch`.** The only trigger is `push: [main]`; re-run a failed release via "Re-run jobs" on the original push run.
 - **Branch-restricted `npm-release` environment** on the reusable publish jobs. Configured in repo settings: `gh api -X PUT repos/rheged-studio/eslint-config/environments/npm-release` with `deployment_branch_policy.custom_branch_policies=true`, then a single `main` branch policy.
 - **Version-vs-tag gate** inside `reusable-pkg-release.yml`: a feature-merge (version unchanged) is a clean no-op; a release-PR merge publishes.
 
-**Build once, publish the exact artifact (A-328).** Implemented in `reusable-pkg-release.yml` — build-time code runs only in an unprivileged job; both publish legs ship one byte-identical tarball with attestation (`gh attestation verify <tarball>`).
+**Build once, publish the exact artifact (R-328).** Implemented in `reusable-pkg-release.yml` — build-time code runs only in an unprivileged job; both publish legs ship one byte-identical tarball with attestation (`gh attestation verify <tarball>`).
 
 Don't reintroduce `NPM_TOKEN` **as a CI secret** unless OIDC is verified broken. The local `.env`-based `NPM_TOKEN` is for laptop-driven publishes only, never CI.
 
-**Choosing the bump.** Feature PRs land as merge commits; release-please ranks Conventional Commits on `main` (A-824). Conventional PR titles stay required (CI `validate-pr-title.yml`) but are no longer the sole post-merge bump signal for feature work. Commitlint / `validate-commits` remain the per-commit gate. The orchestrator still squash-merges the release PR; fan-out stays squash. The changelog-completeness gate in `ci.yml` keeps shippable titles honest.
+**Choosing the bump.** Feature PRs land as merge commits; release-please ranks Conventional Commits on `main` (R-824). Conventional PR titles stay required (CI `validate-pr-title.yml`) but are no longer the sole post-merge bump signal for feature work. Commitlint / `validate-commits` remain the per-commit gate. The orchestrator still squash-merges the release PR; fan-out stays squash. The changelog-completeness gate in `ci.yml` keeps shippable titles honest.
 
 ### Manual publish (break-glass — CI-down only, after the package exists)
 
-> **This is break-glass, not a routine path (A-331).** Reach for it only when CI/OIDC is genuinely down — every normal release goes through `pkg-release.yml` (OIDC, no standing token). The `.env` `NPM_TOKEN` is a long-lived credential, so treat it accordingly:
+> **This is break-glass, not a routine path (R-331).** Reach for it only when CI/OIDC is genuinely down — every normal release goes through `pkg-release.yml` (OIDC, no standing token). The `.env` `NPM_TOKEN` is a long-lived credential, so treat it accordingly:
 >
 > - **Store it in a secrets manager**, retrieved just-in-time into the shell — not committed to a plaintext `.env` that lingers on disk (`.env` is gitignored, but a secrets manager is the stronger control).
 > - **Shortest viable lifetime + a documented rotation cadence**; rotate immediately if a laptop is lost or the token is exposed.
