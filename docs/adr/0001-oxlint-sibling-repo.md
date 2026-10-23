@@ -1,98 +1,371 @@
-# Investigate oxlint-based sibling repo
+# Move to oxlint: sibling repo, hybrid, or defer
 
-**Status:** proposed
-**Linear:** [R-223](https://linear.app/rheged-studio/issue/R-223)
+**Status:** proposed. Re-audited 2026-10-22 against oxlint 1.89.0.
+**Linear:** [R-223](https://linear.app/rheged-studio/issue/R-223) (original investigation). The re-audit also found six bugs in today's ESLint config, filed as [R-2906](https://linear.app/rheged-studio/issue/R-2906) to [R-2911](https://linear.app/rheged-studio/issue/R-2911).
 
-This ADR investigates whether to spin up a sibling repository derived from `@rheged-studio/eslint-config` that replaces ESLint with [oxlint](https://oxc.rs/docs/guide/usage/linter.html). It documents the trade-offs and considered options; the proceed / defer / reject decision is deferred to PR review on this ADR.
+> **Revised 2026-10-22.** The May 2026 version of this ADR was desk research against oxlint 1.66. This revision replaces its evidence with a measured audit against oxlint 1.89.0:
+>
+> - every enabled rule was resolved and checked against oxlint with its exact options;
+> - fixtures were run under both linters;
+> - both linters were run side by side on three estate codebases.
+>
+> Several of the May claims were wrong; see [Corrections to the May 2026 version](#corrections-to-the-may-2026-version). The unmerged audit branch `asw-223-adr-oxlint-sibling-repo` (an oxlint 1.66 rule inventory) is superseded.
+
+This ADR decides whether `@rheged-studio/eslint-config` moves to [oxlint](https://oxc.rs/docs/guide/usage/linter.html), and in what shape. A hybrid is acceptable, and 1:1 parity is not a goal. The proceed / defer / reject call is still made at PR review. The evidence now points clearly at Option D, shipped from this repo.
 
 ## Context
 
-`@rheged-studio/eslint-config` is a thin ESLint v9 flat-config composer. Its value is not the lint engine but the **curation**: which rules are on, which are off, and the composition order that makes them play together. Concretely:
+`@rheged-studio/eslint-config` is a thin ESLint v9 flat-config composer. Its value is not the lint engine but the **curation**: which rules are on, which are off, and the composition order that makes them work together.
 
-- The `base` preset stacks a plugin-alias hack, global ignores, `eslint-config-canonical/auto` (which transitively wires `eslint-plugin-import-x`, `react`, `react-hooks`, `jsx-a11y`, `unicorn`, `regexp`, `n`, `promise`, `jsdoc`), then `packageJson`, `commonjs`, and `preferences` (`index.ts:35-44`).
-- Composition order is load-bearing: `reactRouterExceptions` must come after `preferences` for React Router 7's typed exports, and `eslint-plugin-import-x` is registered under both `import` and `import-x` so canonical's rule references resolve (`index.ts:22-27`, `index.ts:60-63`).
-- The repo is itself a recent extraction (May 2026, from `RobEasthope/protomolecule`). The question "should we extract again, this time for oxlint" is live, but the extraction tax was just paid; doing it again has real cost.
+- `base` stacks:
+  - the `import` ⇄ `import-x` plugin alias;
+  - global ignores;
+  - `eslint-config-canonical/auto`;
+  - `packageJson`, `commonjs` and `preferences`.
+- `canonical/auto` wires in jsdoc, canonical, `typescript-eslint`, regexp, react, react-hooks, prettier, JSON (jsonc), YAML (yml) and GraphQL.
+  - It does **not** wire in jsx-a11y, `n`, vitest or `typescript-eslint`'s type-checking config.
+- `reactRouterExceptions` must come after `preferences` so its `func-style` override wins.
 
-Oxlint is a Rust-based linter (Oxc project, v1.0 stable since August 2025, VoidZero-backed). It markets ~50–100× speed over ESLint, ships ~800 rules across ported plugins (TS, React, Vitest, import, jsx-a11y, unicorn, etc.), has a maintained VS Code extension, and introduced an alpha JS Plugins API in March 2026 for custom rules.
+Resolving the full consumer composition (`base`, `typescript`, `frameworkRouting`, `testing` and every opt-in) gives **587 distinct enabled rules**. On top of these, 39 GraphQL rules fail to load at all ([R-2908](https://linear.app/rheged-studio/issue/R-2908)). The largest groups are:
+
+| Plugin              | Rules |
+| ------------------- | ----: |
+| ESLint core         |   146 |
+| unicorn             |    79 |
+| react               |    65 |
+| `typescript-eslint` |    48 |
+| regexp              |    48 |
+| jsonc               |    39 |
+| @stylistic          |    38 |
+
+### What has changed since May 2026
+
+- **oxlint 1.89.0** (2026-10-19) ships 871 native rules.
+  - It releases a minor every week, and breaking changes land in minors, flagged `[BREAKING]` in the release notes.
+  - Since 1.58, an unknown rule name is a hard config error.
+- **Type-aware linting is stable** ([2026-07-22](https://oxc.rs/blog/2026-07-22-type-aware-linting-stable)).
+  - It runs on `oxlint-tsgolint` v7 (TypeScript 7 / `typescript-go`) and offers 60 type-aware rules.
+  - tsconfigs must be TS 7-clean: for example, `baseUrl` fails the run.
+- **JS plugins are still alpha** and outside semver. They have been alpha since 1.55.0 (March 2026), and no stable date has been published.
+- **Oxfmt is in beta** at 0.74.0.
+  - It passes 100% of Prettier's JS/TS conformance tests.
+  - Tailwind class sorting (including `cn`/`clsx`), import sorting and `package.json` sorting are built in.
+- **Vite+ 1.0 is stable** (2026-09-28, MIT).
+  - It pins an exact oxlint version: vp 1.3.0 bundles oxlint 1.88.0.
+  - It reads lint config from the `lint` block in `vite.config.ts`.
+- **`eslint-config-canonical` has not shipped a release since 47.4.2** (2026-01-26), our current base.
+
+## Method
+
+The raw evidence was kept in a session scratchpad, not in the repo. The numbers below are the record.
+
+1. Resolve ESLint's effective config (enabled rules plus exact options) for representative `.ts`, `.tsx`, `.js`, `.cjs`, test, route, Astro, JSON and YAML files.
+2. For each rule, check whether oxlint 1.89.0 has it natively, and validate our exact options against oxlint's per-rule JSON schemas. oxlint rejects unknown options, so a config that loads is proof the options are accepted.
+3. Run about 200 fixture snippets plus third-party corpora under ESLint 9.39.5 and oxlint, and diff the diagnostics per file, rule and line.
+4. Run non-native rules through `jsPlugins` (the original ESLint plugins) and through `oxlint-plugin-eslint`, which exposes ESLint core rules as `eslint-js/*`.
+5. Run a differential on three estate codebases (octavo, climbwell and tempest), using configs generated by `@oxlint/migrate` 1.89.0, and time both linters.
+
+Each rule got one verdict:
+
+| Verdict            | Meaning                                                 |
+| ------------------ | ------------------------------------------------------- |
+| **native-parity**  | Native rule, same behaviour                             |
+| **native-partial** | Native rule, with small option or behaviour differences |
+| **JS plugin**      | Runs as the original ESLint plugin under oxlint         |
+| **replace**        | Better handled by another tool                          |
+| **drop**           | Not worth keeping                                       |
+| **ESLint-only**    | Has to stay on ESLint                                   |
+
+## Findings
+
+### Rule verdicts
+
+| Area (rules)                                                     | Native parity | Native partial | JS plugin | Replace |    Drop | ESLint-only |
+| ---------------------------------------------------------------- | ------------: | -------------: | --------: | ------: | ------: | ----------: |
+| ESLint core, `typescript-eslint`, eslint-comments, promise (201) |           173 |              9 |         8 |       5 |       6 |           0 |
+| react, react-hooks, import-x, canonical (104)                    |            55 |             15 |         8 |      10 |      16 |           0 |
+| unicorn, regexp, jsdoc, perfectionist (172)                      |            79 |              8 |        66 |       7 |       7 |           5 |
+| JSON, YAML, GraphQL, Astro, prettier, @stylistic, `quotes` (151) |             0 |              0 |         3 |      33 |     105 |           9 |
+| **Total (628)**                                                  |       **307** |         **32** |    **85** |  **55** | **134** |      **14** |
+
+One Astro rule, the local `import/no-unresolved` override, is counted in the total but has no verdict. It runs under ESLint today, because oxlint has no native `import/no-unresolved`.
+
+Only **9 rules genuinely need ESLint**: the 8 Astro template rules and `jsonc/no-dupe-keys`. The other 5 ESLint-only rules (`jsdoc/check-types`, `check-values`, `check-syntax`, `no-undefined-types` and `valid-types`) are only there because of an oxlint bug (see [Platform constraints](#platform-constraints-for-a-shared-oxlint-preset)). A verified 2-line `pnpm patch` to eslint-plugin-jsdoc fixes it, and all 5 then run as JS plugins.
+
+The 134 drops are:
+
+- 39 GraphQL rules, which are broken and unused: no estate repo has a `.graphql` file.
+- 35 `@stylistic` rules and core `quotes`, which the formatter owns.
+- The `jsonc` and `yml` layout rules, which fight our own Prettier output today ([R-709](https://linear.app/rheged-studio/issue/R-709), [R-2909](https://linear.app/rheged-studio/issue/R-2909)).
+- Legacy or low-value React rules.
+- Deprecated or no-op rules.
+- Rules that apply to `.cjs` files only by accident ([R-2907](https://linear.app/rheged-studio/issue/R-2907)).
+
+Per area:
+
+| Area                                | Outcome under oxlint                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ESLint core and `typescript-eslint` | **Nothing has to stay on ESLint.**<br>• 132 of the 146 core rules and 47 of the 48 TS rules are native, and accept our exact options.<br>• The core rules the migrator calls "unsupported" (`consistent-return`, `require-atomic-updates`, `dot-notation`, `no-octal`, …) matched ESLint line for line when run through `eslint-js/*`.<br>• `@typescript-eslint/naming-convention` crashes as a JS plugin, because it asks for parser services. A 10-line shim or a 20-line custom rule replaces it. |
+| react and react-hooks               | Native, including every React Compiler rule (oxc vendors a Rust port of the compiler). 53 of the 78 rules are native.                                                                                                                                                                                                                                                                                                                                                                                |
+| import-x                            | 17 of the 21 rules are native.<br>• Native resolution auto-discovers each file's `tsconfig.json` and handles monorepo `paths` with no resolver settings.<br>• `no-extraneous-dependencies`, `no-useless-path-segments` and `no-unresolved` run fine as an import-x JS plugin.<br>• The export-map rules fail as a JS plugin, so they must stay native.                                                                                                                                               |
+| canonical                           | Only **5** `canonical/*` rules are enabled.<br>• 3 run as a JS plugin: `filename-match-exported`, `no-import-namespace-destructure` and `sort-react-dependencies`.<br>• 2 are on only for `.cjs` by accident, so they are dropped.                                                                                                                                                                                                                                                                   |
+| unicorn                             | 72 of the 79 rules are native, after rewriting five option shapes that oxlint rejects. `prevent-abbreviations` and `no-unused-properties` run as JS plugins.                                                                                                                                                                                                                                                                                                                                         |
+| regexp                              | No native plugin. 42 rules run as a JS plugin with identical results, and 4 are covered by native core rules.<br>• `sort-flags` is blind under oxlint, because oxc's AST normalises flag order.<br>• `no-useless-dollar-replacements` loses its type information.                                                                                                                                                                                                                                    |
+| perfectionist                       | All 22 rules run as a JS plugin, including the Sanity `customGroups`, and `--fix` is byte-identical. `sort-imports` can move to Oxfmt `sortImports`, which cleared 300 corpus violations in one run.                                                                                                                                                                                                                                                                                                 |
+| JSON, YAML and GraphQL              | **Cannot be linted by oxlint at all.** It has no custom-parser support (the Language Plugins RFC is [#23207](https://github.com/oxc-project/oxc/issues/23207), and PR [#24597](https://github.com/oxc-project/oxc/pull/24597) is unmerged). `oxlint .` never even discovers these files.                                                                                                                                                                                                             |
+| Astro                               | oxlint natively lints `.astro` frontmatter and `<script>` blocks with the full JS/TS rule set. Today's ESLint config lints only 10 rules in frontmatter, so this is **more coverage than today**. The 8 template rules need `astro-eslint-parser`, so they stay on ESLint.                                                                                                                                                                                                                           |
+| prettier/prettier                   | Replace with Oxfmt (or standalone Prettier).<br>• Oxfmt matched Prettier byte for byte on this repo, and on Tailwind `cn`/`clsx` sorting.<br>• On a 1,625-file third-party corpus it reformatted 4.3% of TS files, mostly from one documented union-layout divergence.<br>• It was about 14× faster.                                                                                                                                                                                                 |
+
+### Measured on estate code
+
+| Run                                  | octavo | climbwell | tempest |
+| ------------------------------------ | -----: | --------: | ------: |
+| ESLint, full preset (today)          | 27.4 s |    13.9 s |  92.3 s |
+| oxlint, native rules only            | 0.11 s |    0.09 s |  0.14 s |
+| oxlint, native rules plus JS plugins |  3.0 s |     1.2 s |  12.1 s |
+
+The diagnostics:
+
+- **tempest** (409 JS/TS files, never linted with this preset) gave 1,239 ESLint diagnostics. oxlint matched **84% exactly** (1,041).
+  - Nearly all the misses come from rules the migrator knowingly left out, such as `prevent-abbreviations` (134 hits).
+  - Native oxlint plus an ESLint run limited to the rules oxlint lacks reproduced **1,231 of 1,239**.
+  - Of the 38 diagnostics only oxlint reported, most were stricter but correct.
+- **octavo and climbwell** are already lint-clean under ESLint, and the hybrid reproduced them completely.
+  - climbwell's 152 oxlint-only diagnostics were 140 `func-style` hits from one migration-semantics bug (see below), plus option-default mismatches.
+
+**Where ESLint's time goes** (tempest):
+
+| Cost                       | Share of rule time |
+| -------------------------- | -----------------: |
+| `jsdoc/no-undefined-types` |                36% |
+| `prettier/prettier`        |                20% |
+| perfectionist              |               ~22% |
+
+Typed parsing roughly doubles wall time on octavo and climbwell. Whole-repo octavo runs out of memory at 8 GB.
+
+All of that comes from a single type-aware rule, `@typescript-eslint/no-useless-default-assignment`. It is the only reason canonical's `parserOptions.project: true` is needed ([R-2910](https://linear.app/rheged-studio/issue/R-2910)).
+
+**The speed win depends on the ESLint lane being narrow and untyped.** The measured hybrids kept a broad leftover ESLint lane, which still built a typed program and still ran `jsdoc/no-undefined-types`. They gained only 1.1–2.0×, or 3.4× on tempest once `jsdoc/no-undefined-types` was dropped. The recommended lane below would lint only `.astro` and `.json` files without type information. That lane was not measured.
+
+### Behaviour differences to handle on migration
+
+- **A severity-only override resets the rule's options.** In ESLint, `"func-style": "warn"` keeps the inherited `"declaration"` option; in oxlint it falls back to the rule default, `"expression"`. This caused the 140 false positives on climbwell. Presets and consumer configs must always state full options.
+- **`id-length` also checks TypeScript type parameters** (`<T>`). Set `checkGeneric: false`.
+- **Defaults differ.** `no-unused-vars` ignores `_`-prefixed names by default, and `no-inner-declarations` needs `blockScopedFunctions: "allow"` set explicitly.
+- **`promise/prefer-await-to-then` behaves differently natively.** Run eslint-plugin-promise as a JS plugin for parity.
+- **React Compiler suppressions behave differently.** Under oxlint, a `// eslint-disable-next-line react-hooks/exhaustive-deps` comment makes _every_ compiler rule skip the whole component. ESLint keeps analysing it. On one corpus this lost 23 findings, some of them real bugs. Enable `react/rule-suppression` to make those skips visible.
+- **There will be new, correct findings:**
+  - TS import cycles (hidden today by [R-2906](https://linear.app/rheged-studio/issue/R-2906));
+  - `purity` on `new Date()`;
+  - stricter `jsx-key`;
+  - `consistent-function-scoping` inside JSX;
+  - `hook-use-state` through `React.useState`.
+- **`--fix` makes a single pass.** Cascading fixes need repeat runs, and some unicorn and jsdoc fixers are missing or only offered as suggestions.
+
+### Platform constraints for a shared oxlint preset
+
+**Config and distribution:**
+
+- **`extends` drops `env`, `globals`, `settings` and `ignorePatterns`.** Publish plain config objects and a `compose()` helper, consumed from `oxlint.config.ts` (Node ≥ 22.18), not `extends`. `@epic-web/config` ships a JSON `extends` preset and loses exactly these fields.
+- **`settings` is allowed only at the top level** (it is a hard error in overrides), and `react.version: "detect"` is invalid. Our settings are the same for every file, so this is workable.
+- **Top-level `rules` always lose to any matching override.** An ESLint block that comes later and has no `files` must become an override with `files: ["**/*"]`. Override order otherwise matches flat config: later overrides win. `reactRouterExceptions` after `preferences` was reproduced.
+- **Paths resolve relative to the consumer's config file.**
+  - Globs need `**/` prefixes.
+  - `node_modules` is not ignored by default.
+  - `jsPlugins` specifiers must be absolute (`import.meta.resolve`) to survive pnpm.
+
+**JS plugins:**
+
+- **Reserved plugin names** (`react`, `import`, `typescript`, `jsdoc`, `unicorn`, …) force aliases such as `react-js`.
+  - Existing disable comments don't carry over to the aliased names.
+  - Native rules do accept the ESLint names (`@typescript-eslint/`, `import-x/`, `react-hooks/`) in config and in directives, so **the `import`/`import-x` alias hack is unnecessary under oxlint**.
+- **One JS rule that throws discards every JS-plugin diagnostic for that file.** oxlint only prints an error.
+  - Seen with: `naming-convention`, `react/jsx-props-no-multi-spaces` and `eslint-comments/no-unlimited-disable`.
+- **oxlint reuses comment objects across files, which breaks eslint-plugin-jsdoc.** 10 rules silently under-report after the first file in each thread. The 2-line patch moves a `Set` into `create()`.
+- **JS plugins get no type information** (`parserServices` is `{}`, [#19962](https://github.com/oxc-project/oxc/issues/19962)).
+- **There is no cache.** JS-plugin rules run at about 0.6–0.8× of ESLint's own cost, on what is effectively one thread. Native rules don't need a cache.
+
+**Running alongside ESLint:**
+
+- **Unused-directive reporting fails in a hybrid.** Each linter flags `eslint-disable` comments meant for the other.
+- **`eslint-plugin-oxlint` only knows native rules.** We have to split JS-plugin rules between the two linters ourselves.
+- **`@oxlint/migrate` output is lossy.** It:
+  - drops all file-scoped `settings`;
+  - emits bare severities where the defaults differ;
+  - emits `jsonc`/`yml`/`graphql`/`astro` JS-plugin overrides that load without error and never lint anything.
+
+**Versioning:**
+
+- **Pin oxlint exactly**, run a canary, and treat every minor as potentially breaking. Vite+ consumers get whichever oxlint version vp bundles.
+
+### Bugs found in today's ESLint config
+
+These were found while building the audit's baseline. They are worth fixing whatever this ADR decides. They also change the baseline any later comparison runs against.
+
+| Issue                                                                                                          | Bug                                                                                                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [R-2906](https://linear.app/rheged-studio/issue/R-2906)                                                        | Canonical sets `import/extensions`, but import-x reads only `import-x/extensions`. So `no-cycle`, `default`, `no-named-as-default*` and `no-deprecated` never fire on TS modules. Verified: a TS cycle goes undetected. |
+| [R-2907](https://linear.app/rheged-studio/issue/R-2907)                                                        | `preferences` targets `**/*.{ts,tsx,js,jsx,mjs}` and skips `.cjs`. `.cjs` files get canonical's raw defaults, including single quotes.                                                                                  |
+| [R-2908](https://linear.app/rheged-studio/issue/R-2908)                                                        | Canonical's GraphQL config throws on load.                                                                                                                                                                              |
+| [R-2909](https://linear.app/rheged-studio/issue/R-2909), [R-709](https://linear.app/rheged-studio/issue/R-709) | The YAML and JSON layout rules fight Prettier: 23 errors on `.coderabbit.yaml`, 17 on a Prettier-formatted `.json`. `.yml` files are never linted.                                                                      |
+| [R-2910](https://linear.app/rheged-studio/issue/R-2910)                                                        | One type-aware rule forces typed parsing estate-wide: about 2× wall time, plus out-of-memory failures.                                                                                                                  |
+| [R-2911](https://linear.app/rheged-studio/issue/R-2911)                                                        | Dependency hygiene. `jsx-a11y` and `n` are unused. `prettier-plugin-tailwindcss` resolves from the consumer, not from this package.                                                                                     |
+
+## Corrections to the May 2026 version
+
+| May claim                                                             | Finding                                                                                                                                                                                         |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canonical/auto` transitively wires jsx-a11y, `n` and promise.        | It wires promise (3 rules) but neither jsx-a11y nor `n`. Those two are unused dependencies ([R-2911](https://linear.app/rheged-studio/issue/R-2911)).                                           |
+| "Canonical's ~47 curated rules" have no port and must stay on ESLint. | Only **5** `canonical/*` rules are enabled. 3 run as a JS plugin, and 2 are accidental `.cjs` leaks. The curation lives in the _options_ across all plugins, and nearly all of it carries over. |
+| `eslint-plugin-package-json` has no oxlint equivalent.                | We don't use that plugin. `package.json` is linted by generic `jsonc/*` layout rules, which `sort-package-json` and the formatter already cover.                                                |
+| Composition order must stay on ESLint.                                | It is reproducible with ordered oxlint `overrides` (verified). The one caveat is that top-level rules always lose to overrides.                                                                 |
+| Rule-overlap deduplication is an open question.                       | `eslint-plugin-oxlint` handles native rules. Generating both configs from one rule table makes double reporting impossible by construction.                                                     |
+| `eslint --fix --cache` maps cleanly onto oxlint.                      | oxlint has no cache. lint-staged needs `--no-error-on-unmatched-pattern`, because since 1.60 oxlint exits 1 when no files match.                                                                |
 
 ## Capability matrix
 
-| Surface                                                         | Oxlint coverage | Notes                                                                                                                                                                   | Partition verdict (Option D)                         |
-| --------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `eslint-config-canonical` (~47 curated rules)                   | ❌              | No port; rules unique to canonical have no oxlint equivalent                                                                                                            | **ESLint-owns**                                      |
-| `eslint-plugin-import-x` (incl. `import` alias hack)            | ✅              | Oxlint ships an `import` plugin with broad parity                                                                                                                       | Oxlint-owns (overlap to dedupe)                      |
-| `eslint-plugin-react` / `react-hooks`                           | ✅              | Both ported natively                                                                                                                                                    | Oxlint-owns                                          |
-| `eslint-plugin-jsx-a11y`                                        | ✅              | Ported                                                                                                                                                                  | Oxlint-owns                                          |
-| `eslint-plugin-unicorn`, `regexp`, `n`, `promise`, `jsdoc`      | ✅ partial      | Most rules ported; gaps exist per plugin — needs per-rule audit                                                                                                         | Oxlint-owns (with ESLint fallback for missing rules) |
-| `typescript-eslint`                                             | ✅              | Type-aware checks via `oxlint-tsgolint`; non-type-aware native                                                                                                          | Oxlint-owns                                          |
-| `eslint-plugin-package-json`                                    | ❌              | No oxlint equivalent for `**/package.json` linting                                                                                                                      | **ESLint-owns**                                      |
-| `eslint-plugin-astro` (`.astro` template body)                  | ⚠️              | Only embedded `<script>` JS lints; template not parsed ([discussion #19249](https://github.com/oxc-project/oxc/discussions/19249))                                      | **ESLint-owns**                                      |
-| MDX template bodies                                             | ⚠️              | Same shape as Astro: JS portions only                                                                                                                                   | **ESLint-owns**                                      |
-| Storybook / Sanity / e2e / tableComponents / complexity opt-ins | ⚠️              | Most are rule-level disables / file-glob overrides — possible in oxlint config, but per-rule mapping required                                                           | Either                                               |
-| Composition order (`reactRouterExceptions` after `preferences`) | ⚠️              | Oxlint config uses `extends` + override blocks; not flat-config; semantics differ                                                                                       | **ESLint-owns** (in any partition that retains it)   |
-| Plugin alias (`import` ⇄ `import-x`)                            | n/a             | Oxlint's `import` plugin doesn't have the dual-name problem                                                                                                             | Resolved by partition                                |
-| `eslint --fix --cache` (used by `lint-staged`)                  | ✅              | `oxlint --fix` works; cache behaviour differs (no `.eslintcache` equivalent — oxlint is fast enough that caching is less relevant)                                      | Oxlint-owns                                          |
-| VS Code extension                                               | ✅              | `oxc.oxc-vscode`, LSP-based, maintained                                                                                                                                 | n/a                                                  |
-| Custom rule authoring (porting canonical)                       | ⚠️ alpha        | JS Plugins API entered alpha March 2026; ESLint-compatible plugin shape; explicitly unstable                                                                            | Avoided in Option D                                  |
-| Rule-overlap deduplication                                      | ❓ open         | Oxlint supports rule-level disable; needs verification that disabling oxlint's React rules in favour of ESLint's (or vice versa) works cleanly without double-reporting | Open question for Option D                           |
+| Surface                                             | Under oxlint 1.89                                                                                       | Owner (Option D)            |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
+| ESLint core, `typescript-eslint` (194)              | Native, plus `eslint-js/*` for 4 core rules and a shim for `naming-convention`                          | oxlint                      |
+| react, react-hooks including React Compiler (78)    | 53 native; 2 as a JS plugin; the rest dropped or replaced                                               | oxlint                      |
+| import-x (21)                                       | 17 native; 3 as a JS plugin; the alias hack is not needed                                               | oxlint                      |
+| unicorn (79), promise (3), eslint-comments (4)      | Mostly native; a few as JS plugins                                                                      | oxlint                      |
+| canonical (5)                                       | 3 as a JS plugin; 2 dropped                                                                             | JS plugin                   |
+| regexp (48)                                         | 42 as a JS plugin; 4 native                                                                             | JS plugin                   |
+| perfectionist (22)                                  | 20 as a JS plugin; `sort-imports` moves to Oxfmt                                                        | JS plugin / Oxfmt           |
+| jsdoc (23)                                          | 11 native; the rest as a JS plugin **with the patch**, or Oxfmt `jsdoc` for the layout rules            | oxlint / JS plugin          |
+| `prettier/prettier`, @stylistic (39)                | Oxfmt (or standalone Prettier); 3 @stylistic rules as a JS plugin                                       | Oxfmt                       |
+| JSON / YAML (62)                                    | Not lintable; drop the layout rules; keep `jsonc/no-dupe-keys`                                          | Formatter + ESLint (1 rule) |
+| GraphQL (39)                                        | Not lintable, and broken today                                                                          | Drop                        |
+| Astro (9)                                           | Frontmatter and scripts natively; 8 template rules need ESLint                                          | ESLint (`**/*.astro` only)  |
+| Composition order, test, route and opt-in overrides | Ordered `overrides` (verified)                                                                          | oxlint                      |
+| Typed parsing                                       | Optional: `oxlint --type-aware` (tsgolint, stable, 60 rules). Must be set in the consumer's root config | oxlint (opt-in)             |
+| lint-staged                                         | `oxlint --fix --no-error-on-unmatched-pattern`, run before ESLint                                       | Both                        |
+| CI output                                           | `-f github` annotations, `-f sarif`                                                                     | oxlint                      |
+| Editor                                              | `oxc.oxc-vscode` 1.64.1 (VS Code Marketplace and Open VSX, so Cursor works); lint and Oxfmt in one LSP  | oxlint                      |
 
 ## Considered Options
 
-### A. New oxlint sibling repo (e.g. `@rheged-studio/oxlint-config`)
+### A. New oxlint sibling repo (`@rheged-studio/oxlint-config`)
 
-Fork the intent — shared org lint standards — into an independent repo with its own `.oxlintrc.json` presets, semver, and Trusted Publisher. ESLint config stays canonical for existing consumers. The published bootstrap docs in `CLAUDE.md` (recovery codes, first-publish 2FA dance) apply unchanged.
+The May version assumed most of this repo's cost would be porting canonical's custom rules. That premise was wrong: only 5 canonical rules are enabled.
 
-**Cost concentrates in custom-rule porting.** Canonical's ~47 rules would either need to be re-implemented via oxlint's JS Plugins API (alpha) or dropped. Without canonical's curation, an oxlint preset would be "oxlint defaults + a few overrides" — a thinner value proposition than the ESLint repo offers today.
+What remains is overhead without a matching benefit:
+
+- a second package, with its own bootstrap publish and Trusted Publisher;
+- a second release pipeline;
+- the rule table duplicated across two repos, so the two presets would drift.
 
 ### B. Defer
 
-No sibling repo, no migration. Revisit when (a) JS Plugins reaches stable, (b) something covers `package.json` linting, and (c) `.astro` template parsing lands. Track those gates in a follow-up issue.
+The May gates have had mixed results:
+
+- **JS plugins stable:** not met.
+- **`package.json` linting:** moot, because we never needed that plugin.
+- **Astro template parsing:** not met; the Language Plugins PR is still open.
+
+Waiting buys little. The remaining gaps are small enough to leave on ESLint, and the cost of staying grows: typed parsing, out-of-memory failures, and an unreleased canonical base.
 
 ### C. Reject outright
 
-Treat curation as the durable moat and oxlint as an engine swap that doesn't address our value driver. Closes the door on revisiting unless market conditions shift materially.
+This option is weaker than it was in May. The curation turned out to be portable, and the engine swap brings more than speed:
 
-### D. Hybrid — partition by capability (oxlint primary, ESLint for gaps)
+- native TS import cycles;
+- type-aware rules without `typescript-eslint`;
+- fuller `.astro` script coverage;
+- a formatter with Tailwind sorting built in.
 
-Oxlint becomes the **primary linter** for everything it already covers natively (TS, React, hooks, jsx-a11y, import, unicorn, regexp, the bulk of the JS/TS hot path). ESLint stays in place only for what oxlint can't do today:
+### D. Hybrid: oxlint primary, slim ESLint lane (recommended)
 
-- canonical's ~47 curated rules (keep the moat without porting),
-- `eslint-plugin-package-json`,
-- `.astro` template bodies and MDX templates,
-- the framework-routing overrides that depend on flat-config composition order.
+The revised shape:
 
-**Pros.** Captures the perf win on the bulk of code without depending on alpha JS Plugins. Preserves canonical's curation where it works. Incremental: consumers can adopt oxlint piecewise and the ESLint preset shrinks naturally as oxlint closes gaps.
+- **oxlint (native rules)** is the primary linter for JS, TS, JSX and `.astro` scripts.
+- **Oxfmt** (or standalone Prettier as a stepping stone) owns formatting. It replaces `prettier/prettier`, the @stylistic formatting rules, `prettier-plugin-tailwindcss` and the JSON/YAML layout rules.
+- **A slim ESLint lane** handles:
+  - the 8 Astro template rules (`**/*.astro`);
+  - `jsonc/no-dupe-keys` (`**/*.json`);
+  - any JS-plugin rules we choose not to run under oxlint (sub-decision 1).
 
-**Cons.** Two configs to maintain. Rule overlap must be deduplicated (oxlint's `react/*` vs ESLint's `react/*` — pick one source of truth per rule). Consumer DX: `pnpm lint` chains both; lint-staged needs an explicit order; editors need both extensions installed. Possibly two npm packages (one preset per linter) or one package exporting two preset surfaces.
+  It does no typed parsing.
 
-**Open questions for Option D specifically.**
+- **Optionally, type-aware rules via tsgolint** as a net gain. Today we pay for typed parsing and get one type-aware rule.
+- **Shipped from this repo** as a second entry point, `@rheged-studio/eslint-config/oxlint`:
+  - One rule table, with two emitters (the oxlint preset and the ESLint gap preset), so no rule can be enabled in both linters.
+  - A `compose()` helper.
+  - An exact peer dependency on oxlint.
 
-- Does oxlint's `disable` mechanism cleanly suppress rules we want ESLint to own, without re-enabling them via `extends`? Needs a smoke test.
-- Lives in this repo (export an `oxlint` preset alongside the ESLint presets) or in a sibling repo? The former lets shared rule docs and `MIGRATION_FROM_PROTOMOLECULE.md` stay co-located; the latter keeps the two surfaces independently versioned.
-- What's the editor story when both linters run? VS Code surfacing both diagnostics is fine; the risk is users disabling one for noise and silently losing coverage.
+**Pros:**
 
-### D-alt. Hybrid — dual-run for confidence
+- Native oxlint is 0.09–0.14 s against 14–92 s for ESLint.
+- Coverage is the same or better: 1,231 of 1,239 diagnostics reproduced, plus new correct findings.
+- One release pipeline. Works with Vite+'s `lint` block unchanged.
 
-Run oxlint and ESLint over the same files during a transition, accepting the operational cost in exchange for catching regressions. Worth naming, but only as a transitional posture toward eventual oxlint-only — not a steady state.
+**Cons:**
+
+- Two linters and two editor extensions during the hybrid, and the unused-directive conflict.
+- Weekly breaking minors force exact pins.
+- Consumers need a codemod for disable comments on any aliased JS-plugin rule, and must give full options in every severity-only override.
+- The package name says "eslint" but exports an oxlint preset. A rename can come later, as a separate decision.
+
+**Sub-decisions left open:**
+
+1. **Where the ~85 JS-plugin rules run** (regexp, perfectionist, canonical, 3 @stylistic, jsdoc, import-x gaps, `eslint-js/*`):
+   - **In oxlint `jsPlugins`.** One tool, about 8× faster than ESLint. But it is alpha with no semver, a crash discards the whole file's JS-plugin results, and it needs the jsdoc patch.
+   - **In the slim ESLint lane.** Stable. But the lane then covers JS/TS files again and pays ESLint's per-file cost. It still needs no typed parsing.
+2. **When to adopt Oxfmt:**
+   - **Now.** It is beta. Each repo needs a one-off reformat commit (about 4% of TS files), plus `printWidth: 80` (the default is 100) and `sortPackageJson: false` (its order differs from sort-package-json on 151 of 151 files).
+   - **Later.** Move to standalone Prettier first, then to Oxfmt.
+
+### D-alt. Dual-run for confidence
+
+Run both linters over the same files during a transition. The differential in this audit is effectively a one-off dual run. Use this only as a short transitional posture, not as a steady state.
 
 ## Decision
 
-**Open.** This ADR documents the trade-offs; the proceed / defer / reject call is made at PR review. The capability matrix above and the per-option trade-offs are the gating evidence. Option D (partition by capability) is the most concrete and most attractive variant on current evidence; Options A and B are the next most defensible; C is the strongest position if curation is treated as the durable moat.
+**Open.** The proceed / defer / reject call is made at PR review.
+
+On the October 2026 evidence, the recommendation is **Option D, shipped from this repo**. Fix the pre-existing bugs ([R-2906](https://linear.app/rheged-studio/issue/R-2906) to [R-2911](https://linear.app/rheged-studio/issue/R-2911), [R-709](https://linear.app/rheged-studio/issue/R-709)) first, so that the ESLint baseline is correct before anything is compared or migrated.
+
+Sub-decisions 1 (where JS-plugin rules run) and 2 (when to adopt Oxfmt) still need an owner's call.
 
 ## Consequences
 
-- **For consumers:** nothing changes; this is investigation only.
-- **If we proceed (A or D):** follow-up issues to scope are at minimum (1) sibling repo or in-repo `oxlint` preset bootstrap; (2) per-rule overlap audit deciding `oxlint-owns` vs `ESLint-owns` for each shared rule; (3) consumer migration / dual-linter ergonomics; (4) lint-staged + editor extension story; (5) if A specifically, npm Trusted Publisher setup and bootstrap publish following the existing `CLAUDE.md` recipe.
-- **If we defer (B):** gating conditions to watch are JS Plugins stable, `package.json` linting parity, `.astro` template support.
-- **If we reject (C):** none — this repo continues unchanged.
+- **For consumers:** nothing changes until an oxlint entry point ships.
+- **If we proceed with D**, the follow-up work is:
+  1. Fix R-2906 to R-2911 and R-709 in the ESLint preset.
+  2. Build the single rule table with its two emitters, the `compose()` helper and the `./oxlint` export, and pin oxlint exactly via Renovate.
+  3. Encode the option rewrites oxlint's strict validation requires: five unicorn options, `id-length` `checkGeneric`, `no-inner-declarations` and full options on every override.
+  4. Write a consumer migration guide:
+     - a codemod for disable comments on aliased JS-plugin rules;
+     - the lint-staged recipe;
+     - the editor set-up;
+     - how unused-directive reporting is handled in the hybrid;
+     - `react/rule-suppression`.
+  5. Report the comment-object reuse bug upstream to oxc and eslint-plugin-jsdoc, and carry the `pnpm patch` until it is fixed.
+  6. Decide which oxlint version range the preset supports for Vite+ consumers (vp pins its own).
+- **If we defer (B):** watch for JS plugins reaching stable, Language Plugins (#24597) merging, and an oxlint cache landing ([#21672](https://github.com/oxc-project/oxc/issues/21672)).
+- **If we reject (C):** this repo continues unchanged. The pre-existing bugs still need fixing.
 
 ## References
 
 - Repo architecture: `CLAUDE.md`, `index.ts`, `rules/`, `MIGRATION_FROM_PROTOMOLECULE.md`
-- ADR format: `.claude/skills/grill-with-docs/ADR-FORMAT.md`
-- Oxlint overview: <https://oxc.rs/docs/guide/usage/linter.html>
-- Oxlint rules index: <https://oxc.rs/docs/guide/usage/linter/rules.html>
-- Oxlint config: <https://oxc.rs/docs/guide/usage/linter/config.html>
-- JS Plugins alpha announcement (March 2026): <https://oxc.rs/blog/2026-03-11-oxlint-js-plugins-alpha>
-- Astro support tracking: <https://github.com/oxc-project/oxc/discussions/19249>
+- Oxlint docs:
+  - [overview](https://oxc.rs/docs/guide/usage/linter.html)
+  - [config](https://oxc.rs/docs/guide/usage/linter/config.html)
+  - [nested config and `extends`](https://oxc.rs/docs/guide/usage/linter/nested-config.html)
+  - [JS plugins](https://oxc.rs/docs/guide/usage/linter/js-plugins.html)
+  - [type-aware linting](https://oxc.rs/docs/guide/usage/linter/type-aware.html)
+  - [migrating from ESLint](https://oxc.rs/docs/guide/usage/linter/migrate-from-eslint.html)
+- Oxc blog:
+  - [JS plugins alpha (2026-03-11)](https://oxc.rs/blog/2026-03-11-oxlint-js-plugins-alpha)
+  - [type-aware linting stable (2026-07-22)](https://oxc.rs/blog/2026-07-22-type-aware-linting-stable)
+  - [Oxfmt beta (2026-02-24)](https://oxc.rs/blog/2026-02-24-oxfmt-beta)
+- Vite+:
+  - [lint guide](https://viteplus.dev/guide/lint)
+  - [1.0.0 release](https://github.com/voidzero-dev/vite-plus/releases/tag/v1.0.0)
+- Open oxc issues that affect us:
+  - [#18782](https://github.com/oxc-project/oxc/issues/18782) and [#19741](https://github.com/oxc-project/oxc/issues/19741) (no `settings` in overrides)
+  - [#19962](https://github.com/oxc-project/oxc/issues/19962) (no `parserServices`)
+  - [#23207](https://github.com/oxc-project/oxc/issues/23207) and [#24597](https://github.com/oxc-project/oxc/pull/24597) (language plugins)
+  - [#21672](https://github.com/oxc-project/oxc/issues/21672) (cache)
 - VS Code extension: <https://marketplace.visualstudio.com/items?itemName=oxc.oxc-vscode>
