@@ -85,10 +85,12 @@ Each rule got one verdict:
 | ESLint core, `typescript-eslint`, eslint-comments, promise (201) |           173 |              9 |         8 |       5 |       6 |           0 |
 | react, react-hooks, import-x, canonical (104)                    |            55 |             15 |         8 |      10 |      16 |           0 |
 | unicorn, regexp, jsdoc, perfectionist (172)                      |            79 |              8 |        66 |       7 |       7 |           5 |
-| JSON, YAML, GraphQL, Astro, prettier, @stylistic, `quotes` (151) |             0 |              0 |         3 |      33 |     105 |           9 |
-| **Total (628)**                                                  |       **307** |         **32** |    **85** |  **55** | **134** |      **14** |
+| JSON, YAML, GraphQL, Astro, prettier, @stylistic, `quotes` (150) |             0 |              0 |         3 |      33 |     105 |           9 |
+| **Total (627)**                                                  |       **307** |         **32** |    **85** |  **55** | **134** |      **14** |
 
-One Astro rule, the local `import/no-unresolved` override, is counted in the total but has no verdict. It runs under ESLint today, because oxlint has no native `import/no-unresolved`.
+The rows count 627 rule entries for 626 distinct rules: 587 enabled, plus the 39 broken GraphQL rules. The extra entry is `vue-custom-block/no-parsing-error`, which is counted under both JSON and YAML (dropped in both).
+
+The Astro preset's `import/no-unresolved` override is counted once, under import-x, as a JS plugin. oxlint has no native `import/no-unresolved`. But the import-x JS plugin runs on `.astro` frontmatter (verified), and it resolves a TS import that ESLint wrongly flags today.
 
 Only **9 rules genuinely need ESLint**: the 8 Astro template rules and `jsonc/no-dupe-keys`. The other 5 ESLint-only rules (`jsdoc/check-types`, `check-values`, `check-syntax`, `no-undefined-types` and `valid-types`) are only there because of an oxlint bug (see [Platform constraints](#platform-constraints-for-a-shared-oxlint-preset)). A verified 2-line `pnpm patch` to eslint-plugin-jsdoc fixes it, and all 5 then run as JS plugins.
 
@@ -224,25 +226,25 @@ These were found while building the audit's baseline. They are worth fixing what
 
 ## Capability matrix
 
-| Surface                                             | Under oxlint 1.89                                                                                       | Owner (Option D)            |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
-| ESLint core, `typescript-eslint` (194)              | Native, plus `eslint-js/*` for 4 core rules and a shim for `naming-convention`                          | oxlint                      |
-| react, react-hooks including React Compiler (78)    | 53 native; 2 as a JS plugin; the rest dropped or replaced                                               | oxlint                      |
-| import-x (21)                                       | 17 native; 3 as a JS plugin; the alias hack is not needed                                               | oxlint                      |
-| unicorn (79), promise (3), eslint-comments (4)      | Mostly native; a few as JS plugins                                                                      | oxlint                      |
-| canonical (5)                                       | 3 as a JS plugin; 2 dropped                                                                             | JS plugin                   |
-| regexp (48)                                         | 42 as a JS plugin; 4 native                                                                             | JS plugin                   |
-| perfectionist (22)                                  | 20 as a JS plugin; `sort-imports` moves to Oxfmt                                                        | JS plugin / Oxfmt           |
-| jsdoc (23)                                          | 11 native; the rest as a JS plugin **with the patch**, or Oxfmt `jsdoc` for the layout rules            | oxlint / JS plugin          |
-| `prettier/prettier`, @stylistic (39)                | Oxfmt (or standalone Prettier); 3 @stylistic rules as a JS plugin                                       | Oxfmt                       |
-| JSON / YAML (62)                                    | Not lintable; drop the layout rules; keep `jsonc/no-dupe-keys`                                          | Formatter + ESLint (1 rule) |
-| GraphQL (39)                                        | Not lintable, and broken today                                                                          | Drop                        |
-| Astro (9)                                           | Frontmatter and scripts natively; 8 template rules need ESLint                                          | ESLint (`**/*.astro` only)  |
-| Composition order, test, route and opt-in overrides | Ordered `overrides` (verified)                                                                          | oxlint                      |
-| Typed parsing                                       | Optional: `oxlint --type-aware` (tsgolint, stable, 60 rules). Must be set in the consumer's root config | oxlint (opt-in)             |
-| lint-staged                                         | `oxlint --fix --no-error-on-unmatched-pattern`, run before ESLint                                       | Both                        |
-| CI output                                           | `-f github` annotations, `-f sarif`                                                                     | oxlint                      |
-| Editor                                              | `oxc.oxc-vscode` 1.64.1 (VS Code Marketplace and Open VSX, so Cursor works); lint and Oxfmt in one LSP  | oxlint                      |
+| Surface                                             | Under oxlint 1.89                                                                                                          | Owner (Option D)            |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| ESLint core, `typescript-eslint` (194)              | Native, plus `eslint-js/*` for 4 core rules and a shim for `naming-convention`                                             | oxlint                      |
+| react, react-hooks including React Compiler (78)    | 53 native; 2 as a JS plugin; the rest dropped or replaced                                                                  | oxlint                      |
+| import-x (21)                                       | 17 native; 3 as a JS plugin; the alias hack is not needed                                                                  | oxlint                      |
+| unicorn (79), promise (3), eslint-comments (4)      | Mostly native; a few as JS plugins                                                                                         | oxlint                      |
+| canonical (5)                                       | 3 as a JS plugin; 2 dropped                                                                                                | JS plugin                   |
+| regexp (48)                                         | 42 as a JS plugin; 4 native                                                                                                | JS plugin                   |
+| perfectionist (22)                                  | 20 as a JS plugin; `sort-imports` moves to Oxfmt                                                                           | JS plugin / Oxfmt           |
+| jsdoc (23)                                          | 11 native; the rest as a JS plugin **with the patch**, or Oxfmt `jsdoc` for the layout rules                               | oxlint / JS plugin          |
+| `prettier/prettier`, @stylistic (39)                | Oxfmt (or standalone Prettier); 3 @stylistic rules as a JS plugin                                                          | Oxfmt                       |
+| JSON / YAML (62)                                    | Not lintable; drop the layout rules; keep `jsonc/no-dupe-keys`                                                             | Formatter + ESLint (1 rule) |
+| GraphQL (39)                                        | Not lintable, and broken today                                                                                             | Drop                        |
+| Astro (9)                                           | Frontmatter and scripts natively; 8 template rules need ESLint; `import/no-unresolved` override via the import-x JS plugin | ESLint (`**/*.astro` only)  |
+| Composition order, test, route and opt-in overrides | Ordered `overrides` (verified)                                                                                             | oxlint                      |
+| Typed parsing                                       | Optional: `oxlint --type-aware` (tsgolint, stable, 60 rules). Must be set in the consumer's root config                    | oxlint (opt-in)             |
+| lint-staged                                         | `oxlint --fix --no-error-on-unmatched-pattern`, run before ESLint                                                          | Both                        |
+| CI output                                           | `-f github` annotations, `-f sarif`                                                                                        | oxlint                      |
+| Editor                                              | `oxc.oxc-vscode` 1.64.1 (VS Code Marketplace and Open VSX, so Cursor works); lint and Oxfmt in one LSP                     | oxlint                      |
 
 ## Considered Options
 
@@ -284,7 +286,7 @@ The revised shape:
 - **A slim ESLint lane** handles:
   - the 8 Astro template rules (`**/*.astro`);
   - `jsonc/no-dupe-keys` (`**/*.json`);
-  - any JS-plugin rules we choose not to run under oxlint (sub-decision 1).
+  - any JS-plugin rules we choose not to run under oxlint (sub-decision 1). These include the Astro `import/no-unresolved` override, which would then run in the `**/*.astro` lane.
 
   It does no typed parsing.
 
