@@ -7,6 +7,7 @@ import { frameworkRouting as frameworkRoutingRule } from "./rules/frameworkRouti
 import { ignoredFileAndFolders } from "./rules/ignoredFileAndFolders.js";
 import { packageJson } from "./rules/packageJson.js";
 import { preferences } from "./rules/preferences.js";
+import { reactHooks } from "./rules/reactHooks.js";
 import { reactRouterExceptions } from "./rules/reactRouterExceptions.js";
 import { sanity } from "./rules/sanity.js";
 import { storybook } from "./rules/storybook.js";
@@ -30,7 +31,8 @@ const importXAlias: any = {
 
 /**
  * Base preset — the "you almost always want this" stack:
- * plugin-alias hack, global ignores, the canonical baseline, packageJson
+ * plugin-alias hack, global ignores, the canonical baseline, the React Hooks
+ * rules (the plugin's `recommended-latest`), packageJson
  * and tsconfig.eslint.json lint config, commonjs + esm file overrides, and
  * the big preferences block
  * (top-level type imports, func-style, prettier, import resolver, etc.).
@@ -41,6 +43,7 @@ export const base: Linter.Config[] = [
   // eslint-config-canonical/auto — upstream baseline (most rules live here, not in rules/*.ts).
   // Per-rule inventory: https://github.com/gajus/eslint-config-canonical
   ...(eslintConfigCanonicalAuto as Linter.Config[]),
+  reactHooks,
   packageJson,
   tsconfigEslintJson,
   commonjs,
@@ -54,10 +57,11 @@ export const base: Linter.Config[] = [
 export const typescript: Linter.Config = typescriptOverrides;
 
 /**
- * Framework-routing preset for file-routed frameworks (Next.js, React Router 7,
+ * Framework-routing preset for file-routed frameworks (Next.js, React Router,
  * Remix, SvelteKit, Astro, Nuxt). Disables `canonical/filename-match-exported`
- * for routing directories and re-allows arrow functions on `root.tsx` /
- * `*.route.tsx` for typed-export patterns.
+ * for routing directories and re-allows arrow functions on React Router route
+ * modules (`root.tsx`, `*.route.tsx`, and folder routes' `route.tsx` /
+ * `route.ts`) for typed-export patterns.
  *
  * Order matters: `reactRouterExceptions` MUST come after `preferences` (which
  * `base` already includes) so its `func-style` override wins.

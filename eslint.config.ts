@@ -12,6 +12,7 @@ const config: any[] = [
   {
     ignores: [
       "infrastructure/tests/fixtures/dupe-keys/**",
+      "infrastructure/tests/fixtures/routing/**",
       "infrastructure/tests/**/*.test.ts",
     ],
   },
