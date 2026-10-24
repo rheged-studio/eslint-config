@@ -1,7 +1,7 @@
 ---
 title: Sweep Linear issue references to R and C keys
 release_note: ""
-version:
+version: 1.2.0
 created_at: "2026-10-13T20:33:22Z"
 merged_at: "2026-10-14T08:06:41Z"
 branch: r-2722-eslint-config-sweep-issue-references
@@ -17,7 +17,7 @@ stats:
   files_changed: 50
   loc_added: 218
   loc_removed: 189
-  commits:
+  commits: 2
 ---
 
 ## Changed

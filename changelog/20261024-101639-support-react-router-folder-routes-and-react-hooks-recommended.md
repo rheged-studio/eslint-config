@@ -1,7 +1,7 @@
 ---
 title: Support React Router folder routes and React Hooks recommended-latest
 release_note: frameworkRouting now allows typed arrow exports in folder routes (route.tsx / route.ts), and base enables the full eslint-plugin-react-hooks recommended-latest set.
-version:
+version: 1.2.0
 created_at: "2026-10-24T10:16:39Z"
 merged_at: "2026-10-24T13:49:51Z"
 branch: r-2929-r-2930-routing-and-react-hooks
@@ -18,6 +18,7 @@ stats:
   loc_added: 220
   loc_removed: 15
   files_changed: 14
+  commits: 4
 ---
 
 ## Added

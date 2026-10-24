@@ -1,7 +1,7 @@
 ---
 title: Re-vendor agent skills for mattpocock/skills v1.3.1
 release_note: ""
-version:
+version: 1.2.0
 created_at: "2026-10-08T15:20:12Z"
 merged_at: "2026-10-08T16:03:58Z"
 branch: a-2308-re-vendor-skills-for-v131-eslint-config
@@ -18,6 +18,7 @@ stats:
   loc_added: 6487
   loc_removed: 1753
   files_changed: 121
+  commits: 2
 ---
 
 ## Changed

@@ -1,7 +1,7 @@
 ---
 title: Sync the two-team estate identity block
 release_note: ""
-version:
+version: 1.2.0
 created_at: "2026-10-13T16:16:30Z"
 merged_at: "2026-10-13T16:39:20Z"
 branch: r-2690-sync-the-two-team-agents-md
@@ -17,7 +17,7 @@ stats:
   files_changed: 2
   loc_added: 53
   loc_removed: 16
-  commits:
+  commits: 3
 ---
 
 ## Changed
