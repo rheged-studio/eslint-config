@@ -62,7 +62,7 @@
     "release:manual": "pnpm run build && npm publish --access public --provenance=false",
     "release:manual:dry": "pnpm run build && npm publish --access public --provenance=false --dry-run",
     "sort-pkg-json": "sort-package-json",
-    "test": "vitest run",
+    "test": "pnpm run build && vitest run",
     "test:sh": "bash -c 'if command -v bats >/dev/null 2>&1; then bats infrastructure/tests/*.bats; elif [ \"$(uname -s)\" = \"Darwin\" ]; then echo \"⚠️  bats not installed — skipping. Install: brew install bats-core\"; else echo \"⚠️  bats not installed — skipping. Install: apt-get install bats\"; fi'",
     "test:watch": "vitest",
     "tsc": "tsc --noEmit",
