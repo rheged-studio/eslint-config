@@ -54,10 +54,11 @@ export const base: Linter.Config[] = [
 export const typescript: Linter.Config = typescriptOverrides;
 
 /**
- * Framework-routing preset for file-routed frameworks (Next.js, React Router 7,
+ * Framework-routing preset for file-routed frameworks (Next.js, React Router,
  * Remix, SvelteKit, Astro, Nuxt). Disables `canonical/filename-match-exported`
- * for routing directories and re-allows arrow functions on `root.tsx` /
- * `*.route.tsx` for typed-export patterns.
+ * for routing directories and re-allows arrow functions on React Router route
+ * modules (`root.tsx`, `*.route.tsx`, and folder routes' `route.tsx` /
+ * `route.ts`) for typed-export patterns.
  *
  * Order matters: `reactRouterExceptions` MUST come after `preferences` (which
  * `base` already includes) so its `func-style` override wins.
