@@ -3,16 +3,19 @@ title: Bump the npm dependency group, holding ESLint-10-only majors
 release_note: ""
 version:
 created_at: "2026-10-25T10:37:23Z"
-merged_at:
+merged_at: "2026-10-25T14:26:36Z"
 branch: bump-npm-deps-hold-typescript-6
-pr:
-commit:
+pr: 140
+commit: 179d200
 author: rob@rheged.studio
 co_authors: []
 category: chore
 breaking: false
 issues: []
 stats:
+  loc_added: 5310
+  loc_removed: 2786
+  files_changed: 4
 ---
 
 ## Changed
