@@ -3,19 +3,19 @@ title: Remove the Dependabot configuration
 release_note: ""
 version:
 created_at: "2026-11-18T11:19:01Z"
-merged_at:
+merged_at: "2026-11-18T11:52:15Z"
 branch: disable-dependabot
-pr:
-commit:
+pr: 146
+commit: 4110c67
 author: rob@rheged.studio
 co_authors: []
 category: chore
 breaking: false
 issues: []
 stats:
-  loc_added:
-  loc_removed:
-  files_changed:
+  loc_added: 24
+  loc_removed: 55
+  files_changed: 2
 ---
 
 ## Changed
